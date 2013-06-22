@@ -304,10 +304,12 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
     var minimumY = y - (y % BattleArena.Config.tileHeight);
     var maximumX = x +
                      width -
-                     ((x + width) % BattleArena.Config.tileWidth);
+                     (((x + width) % BattleArena.Config.tileWidth) ||
+                        BattleArena.Config.tileWidth);
     var maximumY = y +
                      height -
-                     ((y + height) % BattleArena.Config.tileHeight);
+                     (((y + height) % BattleArena.Config.tileHeight) ||
+                        BattleArena.Config.tileHeight);
     var tiles = [];
 
     for (var x = minimumX; x <= maximumX; x += BattleArena.Config.tileWidth) {
