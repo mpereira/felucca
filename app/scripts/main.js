@@ -154,7 +154,9 @@ BattleArena.Views.Tile = Backbone.View.extend({
       strokeWidth: 2
     });
 
-    if (!this.model.isWalkable()) {
+    if (this.model.isWalkable()) {
+      this.square.setAttr('fill', 'white');
+    } else {
       this.square.setAttr('fill', 'black');
     }
 
@@ -299,19 +301,17 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
     ));
   },
 
-  tilesOccupiedBy: function(object) {
-    var minimumX = object.get('x') -
-                     (object.get('x') % BattleArena.Config.tileWidth);
-    var minimumY = object.get('y') -
-                     (object.get('y') % BattleArena.Config.tileHeight);
-    var maximumX = object.get('x') +
-                     object.get('width') -
+  tilesOccupiedByObjectWithAttributes: function(x, y, width, height) {
+    var minimumX = x - (x % BattleArena.Config.tileWidth);
+    var minimumY = y - (y % BattleArena.Config.tileHeight);
+    var maximumX = x +
+                     width -
                      BattleArena.Config.tileWidth +
-                     (object.get('x') % BattleArena.Config.tileWidth);
-    var maximumY = object.get('y') +
-                     object.get('height') -
+                     (x % BattleArena.Config.tileWidth);
+    var maximumY = y +
+                     height -
                      BattleArena.Config.tileHeight +
-                     (object.get('y') % BattleArena.Config.tileHeight);
+                     (y % BattleArena.Config.tileHeight);
     var tiles = [];
 
     for (var x = minimumX; x <= maximumX; x += BattleArena.Config.tileWidth) {
@@ -323,7 +323,18 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
     return(tiles);
   },
 
+  tilesOccupiedBy: function(object) {
+    return(this.tilesOccupiedByObjectWithAttributes(
+      object.get('x'),
+      object.get('y'),
+      object.get('width'),
+      object.get('height')
+    ));
+  },
+
   onObjectAdd: function(object, objects, options) {
+    object.on('change:x change:y', this.onObjectMovement, this);
+
     var objectSpace = this;
     _(this.tilesOccupiedBy(object)).each(function(tile) {
       tile.get('objects').add(object);
@@ -331,9 +342,32 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
   },
 
   onObjectRemove: function(object, objects, options) {
+    object.off('change:x change:y', this.onObjectMovement, this);
   },
 
   onObjectMovement: function(object) {
+    var previouslyOccupiedTiles = this.tilesOccupiedByObjectWithAttributes(
+      object.previous('x'),
+      object.previous('y'),
+      object.previous('width'),
+      object.previous('height')
+    );
+
+    var currentlyOccupiedTiles = this.tilesOccupiedByObjectWithAttributes(
+      object.get('x'),
+      object.get('y'),
+      object.get('width'),
+      object.get('height')
+    );
+
+    var objectSpace = this;
+    _(_(previouslyOccupiedTiles).difference(currentlyOccupiedTiles)).each(function(tile) {
+      tile.get('objects').remove(object);
+    });
+
+    _(_(currentlyOccupiedTiles).difference(previouslyOccupiedTiles)).each(function(tile) {
+      tile.get('objects').add(object);
+    });
   },
 
   onTileObjectAdd: function(tile, tileObject, tileObjects, options) {
