@@ -13,7 +13,11 @@ window.BattleArena = {
     heroWidth: 40,
     heroHeight: 40,
     baseWidth: 60,
-    baseHeight: 60
+    baseHeight: 60,
+    topBaseFill: 'blue',
+    bottomBaseFill: 'red',
+    topHeroFill: 'cyan',
+    bottomHeroFill: 'orange'
   },
   init: function () {
     this.stage = new Kinetic.Stage({
@@ -46,7 +50,7 @@ window.BattleArena = {
            this.Config.tileHeight,
       width: this.Config.baseWidth,
       height: this.Config.baseHeight,
-      color: 'red'
+      fill: this.Config.bottomBaseFill
     });
 
     var bottomBaseView = new BattleArena.Views.Base({ model: bottomBase });
@@ -59,7 +63,7 @@ window.BattleArena = {
       y: this.Config.tileWidth,
       width: this.Config.baseWidth,
       height: this.Config.baseHeight,
-      color: 'blue'
+      fill: this.Config.topBaseFill
     });
 
     var topBaseView = new BattleArena.Views.Base({ model: topBase });
@@ -70,7 +74,7 @@ window.BattleArena = {
       y: bottomBase.get('y') - this.Config.baseHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
-      color: 'orange'
+      fill: this.Config.bottomHeroFill
     });
 
     var bottomHeroView = new BattleArena.Views.Hero({ model: bottomHero });
@@ -81,7 +85,7 @@ window.BattleArena = {
       y: topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
-      color: 'cyan'
+      fill: this.Config.topHeroFill
     });
 
     var topHeroView = new BattleArena.Views.Hero({ model: topHero });
@@ -233,7 +237,7 @@ BattleArena.Views.Base = Backbone.View.extend({
       width: this.model.get('width'),
       height: this.model.get('height'),
       stroke: 'green',
-      fill: this.model.get('color'),
+      fill: this.model.get('fill'),
       strokeWidth: 4
     });
 
@@ -257,7 +261,7 @@ BattleArena.Views.Hero = Backbone.View.extend({
       width: this.model.get('width'),
       height: this.model.get('height'),
       stroke: 'yellow',
-      fill: this.model.get('color'),
+      fill: this.model.get('fill'),
       strokeWidth: 2
     });
 
