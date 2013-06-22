@@ -10,6 +10,8 @@ window.BattleArena = {
     horizontalTilesCount: 32,
     tileWidth: 20,
     tileHeight: 20,
+    heroWidth: 40,
+    heroHeight: 40,
     baseWidth: 60,
     baseHeight: 60
   },
@@ -56,15 +58,41 @@ window.BattleArena = {
     var topBaseView = new BattleArena.Views.Base({ model: topBase });
     topBaseView.render()
 
+    var bottomHero = new BattleArena.Models.Hero({
+      x: bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
+      y: bottomBase.get('y') - this.Config.baseHeight,
+      width: this.Config.heroWidth,
+      height: this.Config.heroHeight,
+      color: 'orange'
+    });
+
+    var bottomHeroView = new BattleArena.Views.Hero({ model: bottomHero });
+    bottomHeroView.render()
+
+    var topHero = new BattleArena.Models.Hero({
+      x: topBase.get('x') - this.Config.baseWidth,
+      y: topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
+      width: this.Config.heroWidth,
+      height: this.Config.heroHeight,
+      color: 'cyan'
+    });
+
+    var topHeroView = new BattleArena.Views.Hero({ model: topHero });
+    topHeroView.render()
+
     this.mapLayer = new Kinetic.Layer();
     this.basesLayer = new Kinetic.Layer();
+    this.heroesLayer = new Kinetic.Layer();
 
     this.mapLayer.add(mapView.group);
     this.basesLayer.add(bottomBaseView.group);
     this.basesLayer.add(topBaseView.group);
+    this.heroesLayer.add(bottomHeroView.group);
+    this.heroesLayer.add(topHeroView.group);
 
     this.stage.add(this.mapLayer);
     this.stage.add(this.basesLayer);
+    this.stage.add(this.heroesLayer);
   }
 };
 
@@ -167,6 +195,27 @@ BattleArena.Views.Base = Backbone.View.extend({
   },
 
   render: function() {
+  }
+});
+
+BattleArena.Models.Hero = Backbone.Model.extend({
+});
+
+BattleArena.Views.Hero = Backbone.View.extend({
+  initialize: function() {
+    this.group = new Kinetic.Group();
+
+    var square = new Kinetic.Rect({
+      x: this.model.get('x'),
+      y: this.model.get('y'),
+      width: this.model.get('width'),
+      height: this.model.get('height'),
+      stroke: 'yellow',
+      fill: this.model.get('color'),
+      strokeWidth: 2
+    });
+
+    this.group.add(square);
   }
 });
 
