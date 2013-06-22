@@ -17,7 +17,19 @@ window.BattleArena = {
     topBaseFill: 'blue',
     bottomBaseFill: 'red',
     topHeroFill: 'cyan',
-    bottomHeroFill: 'orange'
+    topHeroMovementSpeed: 1,
+    bottomHeroFill: 'orange',
+    bottomHeroMovementSpeed: 1,
+    tileStroke: '#bbb',
+    tileStrokeWidth: '1',
+    shouldHighlightOccupiedTiles: true,
+    walkableTileFill: '#a4deb2',
+    nonWalkableTileFill: '#ddd',
+    tileClickHighlightFill: 'green',
+    tileClickHighlightDuration: 500,
+    shouldHighlightPathfinding: true,
+    tilePathfindingHighlightFill: '#91cca4',
+    movementHandlerDelay: 25
   },
   init: function () {
     this.stage = new Kinetic.Stage({
@@ -69,7 +81,8 @@ window.BattleArena = {
     var topBaseView = new BattleArena.Views.Base({ model: topBase });
     topBaseView.render()
 
-    var bottomHero = new BattleArena.Models.Hero({
+    this.bottomHero = new BattleArena.Models.Hero({
+      movementSpeed: this.Config.bottomHeroMovementSpeed,
       x: bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
       y: bottomBase.get('y') - this.Config.baseHeight,
       width: this.Config.heroWidth,
@@ -77,10 +90,14 @@ window.BattleArena = {
       fill: this.Config.bottomHeroFill
     });
 
-    var bottomHeroView = new BattleArena.Views.Hero({ model: bottomHero });
+    var bottomHeroView = new BattleArena.Views.Hero({
+      model: this.bottomHero,
+      layer: this.heroesLayer
+    });
     bottomHeroView.render()
 
-    var topHero = new BattleArena.Models.Hero({
+    this.topHero = new BattleArena.Models.Hero({
+      movementSpeed: this.Config.topHeroMovementSpeed,
       x: topBase.get('x') - this.Config.baseWidth,
       y: topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
       width: this.Config.heroWidth,
@@ -88,7 +105,10 @@ window.BattleArena = {
       fill: this.Config.topHeroFill
     });
 
-    var topHeroView = new BattleArena.Views.Hero({ model: topHero });
+    var topHeroView = new BattleArena.Views.Hero({
+      model: this.topHero,
+      layer: this.heroesLayer
+    });
     topHeroView.render()
 
     this.mapLayer.add(this.mapView.group);
@@ -108,12 +128,18 @@ window.BattleArena = {
       tiles: this.map.get('tiles')
     });
 
+    this.pathfinder = new BattleArena.Models.Pathfinder({
+      hero: this.bottomHero,
+      tiles: this.map.get('tiles'),
+      tilesView: this.mapView.tilesView
+    });
+
     var objects = this.objects;
     _([
        bottomBase,
        topBase,
-       bottomHero,
-       topHero
+       this.bottomHero,
+       this.topHero
     ]).each(function(object) {
       objects.add(object);
     });
@@ -141,8 +167,8 @@ BattleArena.Views.Tile = Backbone.View.extend({
     this.group.add(this.square);
 
     this.square.setAttrs({
-      stroke: '#ccc',
-      strokeWidth: 2
+      stroke: BattleArena.Config.tileStroke,
+      strokeWidth: BattleArena.Config.tileStrokeWidth
     });
 
     this.model.on('change', this.render, this);
@@ -150,12 +176,20 @@ BattleArena.Views.Tile = Backbone.View.extend({
   },
 
   render: function() {
+    var fill;
+
+    if (BattleArena.Config.shouldHighlightOccupiedTiles && !this.model.isWalkable()) {
+      fill = BattleArena.Config.nonWalkableTileFill
+    } else {
+      fill = BattleArena.Config.walkableTileFill
+    }
+
     this.square.setAttrs({
       x: this.model.get('x'),
       y: this.model.get('y'),
       width: this.model.get('width'),
       height: this.model.get('height'),
-      fill: this.model.isWalkable() ? 'white' : 'black'
+      fill: fill
     });
 
     this.layer.draw();
@@ -249,13 +283,25 @@ BattleArena.Views.Base = Backbone.View.extend({
 });
 
 BattleArena.Models.Hero = Backbone.Model.extend({
+  initialize: function() {
+    this.movable = new BattleArena.Models.Movable(this);
+    this.pathfindable = new BattleArena.Models.Pathfindable(this);
+  }
 });
 
 BattleArena.Views.Hero = Backbone.View.extend({
   initialize: function() {
+    this.layer = this.options.layer;
     this.group = new Kinetic.Group();
+    this.square = new Kinetic.Rect();
 
-    var square = new Kinetic.Rect({
+    this.model.on('change:x change:y', this.render, this);
+
+    this.group.add(this.square);
+  },
+
+  render: function() {
+    this.square.setAttrs({
       x: this.model.get('x'),
       y: this.model.get('y'),
       width: this.model.get('width'),
@@ -265,7 +311,7 @@ BattleArena.Views.Hero = Backbone.View.extend({
       strokeWidth: 2
     });
 
-    this.group.add(square);
+    this.layer.draw();
   }
 });
 
@@ -282,21 +328,6 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
     this.get('objects').each(function(object) {
       object.on('change:x change:y', objectSpace.onObjectMovement, objectSpace);
     });
-
-    this.get('tiles').each(function(tile) {
-      tile.get('objects').on('add', function(tileObject, tileObjects, options) {
-        objectSpace.onTileObjectAdd(tile, tileObject, tileObjects, options);
-      }, objectSpace);
-
-      tile.get('objects').on('remove', function(tileObject, tileObjects, options) {
-        objectSpace.onTileObjectRemove(tile, tileObject, tileObjects, options);
-      }, objectSpace);
-    });
-
-    this.set('grid', new PF.Grid(
-      BattleArena.Config.verticalTilesCount,
-      BattleArena.Config.horizontalTilesCount
-    ));
   },
 
   tilesOccupiedByObjectWithAttributes: function(x, y, width, height) {
@@ -341,6 +372,11 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
 
   onObjectRemove: function(object, objects, options) {
     object.off('change:x change:y', this.onObjectMovement, this);
+
+    var objectSpace = this;
+    _(this.tilesOccupiedBy(object)).each(function(tile) {
+      tile.get('objects').remove(object);
+    });
   },
 
   onObjectMovement: function(object) {
@@ -366,12 +402,204 @@ BattleArena.Models.ObjectSpace = Backbone.Model.extend({
     _(_(currentlyOccupiedTiles).difference(previouslyOccupiedTiles)).each(function(tile) {
       tile.get('objects').add(object);
     });
+  }
+});
+
+BattleArena.Models.Pathfinder = Backbone.Model.extend({
+  initialize: function() {
+    this.finder = new PF.AStarFinder({
+      allowDiagonal: true,
+      dontCrossCorners: true
+    });
+
+    if (BattleArena.Config.shouldHighlightPathfinding) {
+      this.get('hero').on('change:path', this.highlightPath, this);
+    }
+
+    this.set('grid', new PF.Grid(
+      BattleArena.Config.verticalTilesCount,
+      BattleArena.Config.horizontalTilesCount
+    ));
+
+    var pathfinder = this;
+
+    this.get('tilesView').children.each(function(tileView) {
+      tileView.square.on('mousedown touchstart', function(event) {
+        pathfinder.pathfindToTile(tileView.model);
+        pathfinder.highlightTile(tileView.model);
+      }, pathfinder);
+    });
+
+    this.get('tiles').each(function(tile) {
+      tile.get('objects').on('add', function(tileObject, tileObjects, options) {
+        pathfinder.onTileObjectAdd(tile, tileObject, tileObjects, options);
+      }, pathfinder);
+
+      tile.get('objects').on('remove', function(tileObject, tileObjects, options) {
+        pathfinder.onTileObjectRemove(tile, tileObject, tileObjects, options);
+      }, pathfinder);
+    });
+  },
+
+  highlightTile: function(tile) {
+    var tileView = this.get('tilesView').children.find(function(tileView) {
+      return(tileView.model === tile);
+    });
+
+    tileView.square.setAttr(
+      'fill', BattleArena.Config.tileClickHighlightFill
+    );
+
+    _(function() {
+      tileView.square.setAttr('fill', BattleArena.Config.walkableTileFill);
+      tileView.layer.draw();
+    }).delay(BattleArena.Config.tileClickHighlightDuration);
+  },
+
+  highlightPath: function(hero, path, options) {
+    if (_(this.get('hero').get('path')).isEmpty()) {
+      return;
+    }
+
+    var pathfinder = this;
+
+    var previousPathTiles =
+      _(_(this.get('hero').previous('path')).tail()).map(function(tileCoordinates) {
+        return(_(tileCoordinates).map(function(tileCoordinate) {
+          return(tileCoordinate * BattleArena.Config.tileWidth);
+        }))
+      }).reduce(function(memo, coordinates) {
+        return(memo.concat(pathfinder.get('tiles').where({
+          x: coordinates[0], y: coordinates[1]
+        })));
+      }, []);
+
+    var currentPathTiles =
+      _(_(this.get('hero').get('path')).tail()).map(function(tileCoordinates) {
+        return(_(tileCoordinates).map(function(tileCoordinate) {
+          return(tileCoordinate * BattleArena.Config.tileWidth);
+        }))
+      }).reduce(function(memo, coordinates) {
+        return(memo.concat(pathfinder.get('tiles').where({
+          x: coordinates[0], y: coordinates[1]
+        })));
+      }, []);
+
+    _(_(previousPathTiles).difference(currentPathTiles)).each(function(tile) {
+      var tileView = pathfinder.get('tilesView').children.findByModel(tile);
+      tileView.square.setAttr('fill', BattleArena.Config.walkableTileFill);
+    });
+
+    _(_(currentPathTiles).difference(previousPathTiles)).each(function(tile) {
+      var tileView = pathfinder.get('tilesView').children.findByModel(tile);
+      tileView.square.setAttr('fill', BattleArena.Config.tilePathfindingHighlightFill);
+    });
+  },
+
+  pathfindToTile: function(tile) {
+    var path = _(this.finder.findPath(
+      Math.floor(this.get('hero').get('x') / BattleArena.Config.tileWidth),
+      Math.floor(this.get('hero').get('y') / BattleArena.Config.tileHeight),
+      Math.floor(tile.get('x') / BattleArena.Config.tileWidth),
+      Math.floor(tile.get('y') / BattleArena.Config.tileHeight),
+      this.get('grid').clone()
+    )).tail();
+
+    if (!path || !path[0] || !path[0][0] || !path[0][1]) {
+      return;
+    }
+
+    this.get('hero').set('path', path);
   },
 
   onTileObjectAdd: function(tile, tileObject, tileObjects, options) {
+    this.get('grid').setWalkableAt(
+      tile.get('x') / BattleArena.Config.tileWidth,
+      tile.get('y') / BattleArena.Config.tileHeight,
+      tile.isWalkable()
+    );
   },
 
   onTileObjectRemove: function(tile, tileObject, tileObjects, options) {
+    this.get('grid').setWalkableAt(
+      tile.get('x') / BattleArena.Config.tileWidth,
+      tile.get('y') / BattleArena.Config.tileHeight,
+      tile.isWalkable()
+    );
+  }
+});
+
+BattleArena.Models.Movable = Backbone.Model.extend({
+  initialize: function(movable) {
+    this.movable = movable
+
+    this.movementHandlerIntervalId = setInterval(
+      _(this.movementHandler).bind(this),
+      BattleArena.Config.movementHandlerDelay
+    );
+  },
+
+  movementHandler: function() {
+    var x = this.movable.get('x');
+    var y = this.movable.get('y');
+
+    if (this.movable.get('x') > this.movable.get('destinationX')) {
+      x -= this.movable.get('movementSpeed');
+    } else if (this.movable.get('x') < this.movable.get('destinationX')) {
+      x += this.movable.get('movementSpeed');
+    }
+
+    if (this.movable.get('y') > this.movable.get('destinationY')) {
+      y -= this.movable.get('movementSpeed');
+    } else if (this.movable.get('y') < this.movable.get('destinationY')) {
+      y += this.movable.get('movementSpeed');
+    }
+
+    this.movable.set({ x: x, y: y });
+  },
+});
+
+BattleArena.Models.Pathfindable = Backbone.Model.extend({
+  initialize: function(pathfindable) {
+    this.set('pathfindable', pathfindable);
+
+    this.get('pathfindable').set('path', []);
+
+    this.get('pathfindable').on('change:path', this.setDestinationWithThePathsHead, this);
+    this.get('pathfindable').on(
+      'change:x change:y change:destinationX change:destinationY',
+      this.setPathToItsTailIfOnIntermediateDestination,
+      this
+    );
+  },
+
+  setDestinationWithThePathsHead: function(creature, value, options) {
+    if (_(this.get('pathfindable').get('path')).isEmpty()) {
+      return;
+    }
+
+    var pathHead = _(this.get('pathfindable').get('path')).head();
+
+    this.get('pathfindable').set({
+      destinationX: pathHead[0] * BattleArena.Config.tileWidth,
+      destinationY: pathHead[1] * BattleArena.Config.tileHeight
+    });
+  },
+
+  setPathToItsTailIfOnIntermediateDestination: function(creature, value, options) {
+    if (_(this.get('pathfindable').get('path')).isEmpty()) {
+      return;
+    }
+
+    if (this.get('pathfindable').get('x') ===
+          this.get('pathfindable').get('destinationX') &&
+          this.get('pathfindable').get('y') ===
+            this.get('pathfindable').get('destinationY')) {
+      this.get('pathfindable').set(
+        'path',
+        _(this.get('pathfindable').get('path')).tail()
+      );
+    }
   }
 });
 
