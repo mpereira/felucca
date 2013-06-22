@@ -140,6 +140,11 @@ BattleArena.Views.Tile = Backbone.View.extend({
     this.square = new Kinetic.Rect();
     this.group.add(this.square);
 
+    this.square.setAttrs({
+      stroke: '#ccc',
+      strokeWidth: 2
+    });
+
     this.model.on('change', this.render, this);
     this.model.get('objects').on('reset add remove', this.render, this);
   },
@@ -150,15 +155,8 @@ BattleArena.Views.Tile = Backbone.View.extend({
       y: this.model.get('y'),
       width: this.model.get('width'),
       height: this.model.get('height'),
-      stroke: '#ccc',
-      strokeWidth: 2
+      fill: this.model.isWalkable() ? 'white' : 'black'
     });
-
-    if (this.model.isWalkable()) {
-      this.square.setAttr('fill', 'white');
-    } else {
-      this.square.setAttr('fill', 'black');
-    }
 
     this.layer.draw();
   }
