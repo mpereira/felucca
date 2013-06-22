@@ -7,7 +7,8 @@
     "backbone": "~1.0.0",
     "backbone.marionette": "1.0.3",
     "modernizr": "~2.6.2",
-    "kineticjs": "https://github.com/ericdrowell/KineticJS.git"
+    "kineticjs": "https://github.com/ericdrowell/KineticJS.git",
+    "PathFinding": "https://github.com/qiao/PathFinding.js.git"
   },
   "devDependencies": {}
 }
