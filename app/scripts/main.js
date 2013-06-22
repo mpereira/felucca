@@ -22,15 +22,22 @@ window.BattleArena = {
       height: 640
     });
 
-    var map = new BattleArena.Models.Map({
+    this.mapLayer = new Kinetic.Layer();
+    this.basesLayer = new Kinetic.Layer();
+    this.heroesLayer = new Kinetic.Layer();
+
+    this.map = new BattleArena.Models.Map({
       width: this.Config.verticalTilesCount * this.Config.tileWidth,
       height: this.Config.horizontalTilesCount * this.Config.tileHeight,
       tileWidth: this.Config.tileWidth,
       tileHeight: this.Config.tileHeight
     });
 
-    var mapView = new BattleArena.Views.Map({ model: map });
-    mapView.render();
+    this.mapView = new BattleArena.Views.Map({
+      model: this.map,
+      layer: this.mapLayer
+    });
+    this.mapView.render();
 
     var bottomBase = new BattleArena.Models.Base({
       x: this.Config.tileWidth,
@@ -80,11 +87,7 @@ window.BattleArena = {
     var topHeroView = new BattleArena.Views.Hero({ model: topHero });
     topHeroView.render()
 
-    this.mapLayer = new Kinetic.Layer();
-    this.basesLayer = new Kinetic.Layer();
-    this.heroesLayer = new Kinetic.Layer();
-
-    this.mapLayer.add(mapView.group);
+    this.mapLayer.add(this.mapView.group);
     this.basesLayer.add(bottomBaseView.group);
     this.basesLayer.add(topBaseView.group);
     this.heroesLayer.add(bottomHeroView.group);
@@ -93,10 +96,34 @@ window.BattleArena = {
     this.stage.add(this.mapLayer);
     this.stage.add(this.basesLayer);
     this.stage.add(this.heroesLayer);
+
+    this.objects = new BattleArena.Collections.Objects();
+
+    this.objectSpace = new BattleArena.Models.ObjectSpace({
+      objects: this.objects,
+      tiles: this.map.get('tiles')
+    });
+
+    var objects = this.objects;
+    _([
+       bottomBase,
+       topBase,
+       bottomHero,
+       topHero
+    ]).each(function(object) {
+      objects.add(object);
+    });
   }
 };
 
 BattleArena.Models.Tile = Backbone.Model.extend({
+  initialize: function() {
+    this.set('objects', new BattleArena.Collections.Objects());
+  },
+
+  isWalkable: function() {
+    return(this.get('objects').size() === 0);
+  }
 });
 
 BattleArena.Collections.Tiles = Backbone.Collection.extend({
@@ -104,9 +131,17 @@ BattleArena.Collections.Tiles = Backbone.Collection.extend({
 
 BattleArena.Views.Tile = Backbone.View.extend({
   initialize: function() {
+    this.layer = this.options.layer;
     this.group = new Kinetic.Group();
+    this.square = new Kinetic.Rect();
+    this.group.add(this.square);
 
-    var square = new Kinetic.Rect({
+    this.model.on('change', this.render, this);
+    this.model.get('objects').on('reset add remove', this.render, this);
+  },
+
+  render: function() {
+    this.square.setAttrs({
       x: this.model.get('x'),
       y: this.model.get('y'),
       width: this.model.get('width'),
@@ -115,10 +150,11 @@ BattleArena.Views.Tile = Backbone.View.extend({
       strokeWidth: 2
     });
 
-    this.group.add(square);
-  },
+    if (!this.model.isWalkable()) {
+      this.square.setAttr('fill', 'black');
+    }
 
-  render: function() {
+    this.layer.draw();
   }
 });
 
@@ -127,7 +163,14 @@ BattleArena.Views.Tiles = Backbone.Marionette.CollectionView.extend({
   itemView: BattleArena.Views.Tile,
 
   initialize: function() {
+    this.layer = this.options.layer;
     this.group = new Kinetic.Group();
+  },
+
+  buildItemView: function(item, ItemViewType, itemViewOptions) {
+    return(new ItemViewType(_({
+      model: item, layer: this.layer
+    }).extend(itemViewOptions)));
   },
 
   onRender: function() {
@@ -155,18 +198,21 @@ BattleArena.Models.Map = Backbone.Model.extend({
         }
       }
     }
-  },
+  }
 });
 
 BattleArena.Views.Map = Backbone.View.extend({
   initialize: function() {
+    this.layer = this.options.layer;
     this.group = new Kinetic.Group();
 
     this.tilesView = new BattleArena.Views.Tiles({
-      collection: this.model.get('tiles')
+      collection: this.model.get('tiles'),
+      layer: this.layer
     });
 
     this.group.add(this.tilesView.group);
+    this.layer.add(this.group);
   },
 
   render: function() {
@@ -216,6 +262,80 @@ BattleArena.Views.Hero = Backbone.View.extend({
     });
 
     this.group.add(square);
+  }
+});
+
+BattleArena.Collections.Objects = Backbone.Collection.extend({
+});
+
+BattleArena.Models.ObjectSpace = Backbone.Model.extend({
+  initialize: function() {
+    this.get('objects').on('add', this.onObjectAdd, this);
+    this.get('objects').on('remove', this.onObjectRemove, this);
+
+    var objectSpace = this;
+
+    this.get('objects').each(function(object) {
+      object.on('change:x change:y', objectSpace.onObjectMovement, objectSpace);
+    });
+
+    this.get('tiles').each(function(tile) {
+      tile.get('objects').on('add', function(tileObject, tileObjects, options) {
+        objectSpace.onTileObjectAdd(tile, tileObject, tileObjects, options);
+      }, objectSpace);
+
+      tile.get('objects').on('remove', function(tileObject, tileObjects, options) {
+        objectSpace.onTileObjectRemove(tile, tileObject, tileObjects, options);
+      }, objectSpace);
+    });
+
+    this.set('grid', new PF.Grid(
+      BattleArena.Config.verticalTilesCount,
+      BattleArena.Config.horizontalTilesCount
+    ));
+  },
+
+  tilesOccupiedBy: function(object) {
+    var minimumX = object.get('x') -
+                     (object.get('x') % BattleArena.Config.tileWidth);
+    var minimumY = object.get('y') -
+                     (object.get('y') % BattleArena.Config.tileHeight);
+    var maximumX = object.get('x') +
+                     object.get('width') -
+                     BattleArena.Config.tileWidth +
+                     (object.get('x') % BattleArena.Config.tileWidth);
+    var maximumY = object.get('y') +
+                     object.get('height') -
+                     BattleArena.Config.tileHeight +
+                     (object.get('y') % BattleArena.Config.tileHeight);
+    var tiles = [];
+
+    for (var x = minimumX; x <= maximumX; x += BattleArena.Config.tileWidth) {
+      for (var y = minimumY; y <= maximumY; y += BattleArena.Config.tileHeight) {
+        tiles = tiles.concat(this.get('tiles').where({ x: x, y: y }));
+      }
+    }
+
+    return(tiles);
+  },
+
+  onObjectAdd: function(object, objects, options) {
+    var objectSpace = this;
+    _(this.tilesOccupiedBy(object)).each(function(tile) {
+      tile.get('objects').add(object);
+    });
+  },
+
+  onObjectRemove: function(object, objects, options) {
+  },
+
+  onObjectMovement: function(object) {
+  },
+
+  onTileObjectAdd: function(tile, tileObject, tileObjects, options) {
+  },
+
+  onTileObjectRemove: function(tile, tileObject, tileObjects, options) {
   }
 });
 
