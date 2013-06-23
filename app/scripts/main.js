@@ -207,6 +207,7 @@ BattleArena.Views.Tile = Backbone.View.extend({
 
   render: function() {
     this.layer.draw();
+    return(this);
   }
 });
 
@@ -269,6 +270,7 @@ BattleArena.Views.Map = Backbone.View.extend({
 
   render: function() {
     this.tilesView.render();
+    return(this);
   }
 });
 
@@ -293,6 +295,7 @@ BattleArena.Views.Base = Backbone.View.extend({
   },
 
   render: function() {
+    return(this);
   }
 });
 
@@ -331,6 +334,7 @@ BattleArena.Views.Hero = Backbone.View.extend({
 
   render: function() {
     this.layer.draw();
+    return(this);
   }
 });
 
