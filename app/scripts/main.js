@@ -178,15 +178,21 @@ BattleArena.Views.Tile = Backbone.View.extend({
     this.group.add(this.square);
 
     this.square.setAttrs({
+      x: this.model.get('x'),
+      y: this.model.get('y'),
+      width: this.model.get('width'),
+      height: this.model.get('height'),
       stroke: BattleArena.Config.tileStroke,
-      strokeWidth: BattleArena.Config.tileStrokeWidth
+      strokeWidth: BattleArena.Config.tileStrokeWidth,
+      fill: BattleArena.Config.walkableTileFill
     });
 
-    this.model.on('change', this.render, this);
-    this.model.get('objects').on('reset add remove', this.render, this);
+    this.model.get('objects').on(
+      'reset add remove', this.onModelObjectsChange, this
+    );
   },
 
-  render: function() {
+  onModelObjectsChange: function(tile, options) {
     var fill;
 
     if (BattleArena.Config.shouldHighlightOccupiedTiles && !this.model.isWalkable()) {
@@ -195,14 +201,11 @@ BattleArena.Views.Tile = Backbone.View.extend({
       fill = BattleArena.Config.walkableTileFill
     }
 
-    this.square.setAttrs({
-      x: this.model.get('x'),
-      y: this.model.get('y'),
-      width: this.model.get('width'),
-      height: this.model.get('height'),
-      fill: fill
-    });
+    this.square.setAttr('fill', fill);
+    this.render();
+  },
 
+  render: function() {
     this.layer.draw();
   }
 });
@@ -306,12 +309,8 @@ BattleArena.Views.Hero = Backbone.View.extend({
     this.group = new Kinetic.Group();
     this.square = new Kinetic.Rect();
 
-    this.model.on('change:x change:y', this.render, this);
+    this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
 
-    this.group.add(this.square);
-  },
-
-  render: function() {
     this.square.setAttrs({
       x: this.model.get('x'),
       y: this.model.get('y'),
@@ -322,6 +321,15 @@ BattleArena.Views.Hero = Backbone.View.extend({
       strokeWidth: 2
     });
 
+    this.group.add(this.square);
+  },
+
+  onChangeXOrChangeY: function(hero, options) {
+    this.square.setAttrs({ x: this.model.get('x'), y: this.model.get('y') });
+    this.render();
+  },
+
+  render: function() {
     this.layer.draw();
   }
 });
