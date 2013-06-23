@@ -16,6 +16,8 @@ window.BattleArena = {
     baseHeight: 60,
     topBaseFill: 'blue',
     bottomBaseFill: 'red',
+    minimumHeroStrength: 10,
+    maximumHeroStrength: 100,
     topHeroFill: 'cyan',
     topHeroMovementSpeed: 1,
     bottomHeroFill: 'orange',
@@ -303,6 +305,20 @@ BattleArena.Models.Hero = Backbone.Model.extend({
   initialize: function() {
     this.movable = new BattleArena.Models.Movable(this);
     this.pathfindable = new BattleArena.Models.Pathfindable(this);
+    this.strength = new BattleArena.Models.CappedAttribute({
+      mixee: this,
+      name: 'strength',
+      minimum: BattleArena.Config.minimumHeroStrength,
+      maximum: BattleArena.Config.maximumHeroStrength
+    });
+    this.hitPoints = new BattleArena.Models.CappedAttribute({
+      mixee: this,
+      name: 'hitPoints',
+      minimum: 0,
+      maximum: _(function() {
+        return(this.get('strength'));
+      }).bind(this)
+    });
   }
 });
 
@@ -623,6 +639,49 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
         _(this.get('pathfindable').get('path')).tail()
       );
     }
+  }
+});
+
+BattleArena.Models.CappedAttribute = Backbone.Model.extend({
+  initialize: function() {
+    var cappedAttribute = this;
+
+    _(['minimum', 'maximum']).each(function(bound) {
+      if (!_(cappedAttribute.get(bound)).isNumber() &&
+            !_(cappedAttribute.get(bound)).isFunction()) {
+        throw(new Error('"' + bound + '" attribute must be an integer or a function'));
+      }
+    });
+
+    if (!this.has('value')) {
+      this.get('mixee').set(this.get('name'), this._getValue(this.get('minimum')));
+    }
+  },
+
+  _getValue: function(valueOrFunction) {
+    return(_(valueOrFunction).isFunction() ? valueOrFunction() : valueOrFunction);
+  },
+
+  normalizedSet: function(value) {
+    if (value < this._getValue(this.get('minimum'))) {
+      value = this._getValue(this.get('minimum'));
+    } else if (value > this._getValue(this.get('maximum'))) {
+      value = this._getValue(this.get('maximum'));
+    } else {
+      value = Number(value.toFixed(1));
+    }
+
+    this.get('mixee').set(this.get('name'), value);
+
+    return(this.get('mixee'));
+  },
+
+  decrease: function(quantity) {
+    return(this.normalizedSet(this.get('mixee').get(this.get('name')) - quantity));
+  },
+
+  increase: function(quantity) {
+    return(this.normalizedSet(this.get('mixee').get(this.get('name')) + quantity));
   }
 });
 
