@@ -23,12 +23,12 @@ window.BattleArena = {
     tileStroke: '#bbb',
     tileStrokeWidth: '1',
     shouldHighlightOccupiedTiles: true,
-    walkableTileFill: '#a4deb2',
+    walkableTileFill: '#83AF9B',
     nonWalkableTileFill: '#ddd',
     tileClickHighlightFill: 'green',
     tileClickHighlightDuration: 500,
     shouldHighlightPathfinding: true,
-    tilePathfindingHighlightFill: '#91cca4',
+    tilePathfindingHighlightFill: '#a4deb2',
     movementHandlerDelay: 25
   },
   init: function () {

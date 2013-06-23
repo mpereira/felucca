@@ -1,5 +1,19 @@
 body {
+  background-color: #29191C;
 }
 
-body #container {
+body h1 {
+  color: #FE4365;
+  text-align: center;
+  font-family: 'Londrina Solid', cursive;
+  font-size: 80px;
+  font-weight: normal;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+body #container div {
+  display: block !important;
+  border: 7px solid #703f47;
+  margin: 0 auto;
 }
