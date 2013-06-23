@@ -143,6 +143,17 @@ window.BattleArena = {
     ]).each(function(object) {
       objects.add(object);
     });
+
+    var stats = new Stats();
+    stats.setMode(0);
+
+    stats.domElement.style.position = 'fixed';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+
+    document.body.appendChild(stats.domElement);
+
+    setInterval(function () { stats.update(); }, 1000 / 60);
   }
 };
 
