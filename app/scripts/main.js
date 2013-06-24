@@ -6,14 +6,14 @@ window.BattleArena = {
   Collections: {},
   Views: {},
   Config: {
-    verticalTilesCount: 32,
-    horizontalTilesCount: 32,
-    tileWidth: 20,
-    tileHeight: 20,
+    verticalTilesCount: 16,
+    horizontalTilesCount: 16,
+    tileWidth: 40,
+    tileHeight: 40,
     heroWidth: 40,
     heroHeight: 40,
-    baseWidth: 60,
-    baseHeight: 60,
+    baseWidth: 80,
+    baseHeight: 80,
     topBaseFill: 'blue',
     bottomBaseFill: 'red',
     minimumHeroStrength: 10,
@@ -31,7 +31,7 @@ window.BattleArena = {
     tileClickHighlightDuration: 500,
     shouldHighlightPathfinding: true,
     tilePathfindingHighlightFill: '#a4deb2',
-    movementHandlerDelay: 25
+    movementHandlerDelay: 10
   },
   init: function () {
     this.stage = new Kinetic.Stage({
@@ -159,6 +159,12 @@ window.BattleArena = {
   }
 };
 
+BattleArena.Utils = {
+  getValue: function(valueOrFunction) {
+    return(_(valueOrFunction).isFunction() ? valueOrFunction() : valueOrFunction);
+  },
+}
+
 BattleArena.Models.Tile = Backbone.Model.extend({
   initialize: function() {
     this.set('objects', new BattleArena.Collections.Objects());
@@ -267,7 +273,6 @@ BattleArena.Views.Map = Backbone.View.extend({
     });
 
     this.group.add(this.tilesView.group);
-    this.layer.add(this.group);
   },
 
   render: function() {
@@ -319,32 +324,69 @@ BattleArena.Models.Hero = Backbone.Model.extend({
         return(this.get('strength'));
       }).bind(this)
     });
+
+    var hero = this;
+    this.hitPointsBar = new BattleArena.Models.ValueBar({
+      x: (this.get('width') - this.get('width') * 0.75) / 2,
+      y: - 6 * 2,
+      width: this.get('width') * 0.75,
+      height: 6,
+      fill: 'red',
+      stroke: 'black',
+      strokeWidth: 1,
+      minimumValue: this.hitPoints.get('minimum'),
+      maximumValue: this.hitPoints.get('maximum'),
+      value: function() {
+        return(hero.get('hitPoints'));
+      },
+      onInitialize: function(valueBar) {
+        hero.on('change:hitPoints', function(hero, value, options) {
+          valueBar.set('hitPoints', value);
+        });
+      }
+    });
   }
 });
 
 BattleArena.Views.Hero = Backbone.View.extend({
   initialize: function() {
     this.layer = this.options.layer;
-    this.group = new Kinetic.Group();
-    this.square = new Kinetic.Rect();
 
-    this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
-
-    this.square.setAttrs({
+    this.group = new Kinetic.Group({
       x: this.model.get('x'),
-      y: this.model.get('y'),
+      y: this.model.get('y')
+    });
+
+    this.square = new Kinetic.Rect({
       width: this.model.get('width'),
       height: this.model.get('height'),
       stroke: 'yellow',
       fill: this.model.get('fill'),
-      strokeWidth: 2
+      strokeWidth: 2,
+      draggable: true
     });
 
+    this.hitPointsBarView = new BattleArena.Views.ValueBar({
+      model: this.model.hitPointsBar,
+      layer: this.layer
+    });
+
+    this.group.add(this.hitPointsBarView.group);
     this.group.add(this.square);
+
+    var heroView = this;
+    this.square.on('dragmove', function(event) {
+      heroView.model.set({
+        x: event.targetNode.getAttr('x'),
+        y: event.targetNode.getAttr('y')
+      });
+    })
+
+    this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
   },
 
   onChangeXOrChangeY: function(hero, options) {
-    this.square.setAttrs({ x: this.model.get('x'), y: this.model.get('y') });
+    this.group.setAttrs({ x: this.model.get('x'), y: this.model.get('y') });
     this.render();
   },
 
@@ -654,19 +696,17 @@ BattleArena.Models.CappedAttribute = Backbone.Model.extend({
     });
 
     if (!this.has('value')) {
-      this.get('mixee').set(this.get('name'), this._getValue(this.get('minimum')));
+      this.get('mixee').set(
+        this.get('name'), BattleArena.Utils.getValue(this.get('minimum'))
+      );
     }
   },
 
-  _getValue: function(valueOrFunction) {
-    return(_(valueOrFunction).isFunction() ? valueOrFunction() : valueOrFunction);
-  },
-
   normalizedSet: function(value) {
-    if (value < this._getValue(this.get('minimum'))) {
-      value = this._getValue(this.get('minimum'));
-    } else if (value > this._getValue(this.get('maximum'))) {
-      value = this._getValue(this.get('maximum'));
+    if (value < BattleArena.Utils.getValue(this.get('minimum'))) {
+      value = BattleArena.Utils.getValue(this.get('minimum'));
+    } else if (value > BattleArena.Utils.getValue(this.get('maximum'))) {
+      value = BattleArena.Utils.getValue(this.get('maximum'));
     } else {
       value = Number(value.toFixed(1));
     }
@@ -682,6 +722,50 @@ BattleArena.Models.CappedAttribute = Backbone.Model.extend({
 
   increase: function(quantity) {
     return(this.normalizedSet(this.get('mixee').get(this.get('name')) + quantity));
+  }
+});
+
+BattleArena.Models.ValueBar = Backbone.Model.extend({
+  initialize: function() {
+    this.get('onInitialize')(this);
+  }
+});
+
+BattleArena.Views.ValueBar = Backbone.View.extend({
+  initialize: function() {
+    this.layer = this.options.layer;
+
+    this.group = new Kinetic.Group({
+      x: this.model.get('x'),
+      y: this.model.get('y')
+    });
+
+    this.rectangle = new Kinetic.Rect({
+      height: this.model.get('height'),
+      fill: this.model.get('fill'),
+      stroke: this.model.get('stroke'),
+      strokeWidth: this.model.get('strokeWidth')
+    });
+
+    this.updateWidth();
+
+    this.group.add(this.rectangle);
+
+    this.model.on('change', this.updateWidth, this);
+  },
+
+  updateWidth: function() {
+    this.rectangle.setAttrs({
+      width: this.model.get('width') *
+               this.model.get('value')() /
+                 BattleArena.Utils.getValue(this.model.get('maximumValue'))
+    });
+
+    this.render();
+  },
+
+  render: function() {
+    this.layer.draw();
   }
 });
 
