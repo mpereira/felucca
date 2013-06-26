@@ -18,6 +18,6 @@
   - https://github.com/alexanderbeletsky/backbone-computedfields
   - https://github.com/derickbailey/backbone.compute
 
-- Break down map layer into multiple smaller layers.
-
 - On ObjectSpace make onObjectMovement() only be called on tile change.
+
+- Create new layer for highlighting tiles.
