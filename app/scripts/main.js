@@ -320,6 +320,7 @@ BattleArena.Models.Hero = Backbone.Model.extend({
       mixee: this,
       name: 'hitPoints',
       minimum: 0,
+      value: this.get('strength'),
       maximum: _(function() {
         return(this.get('strength'));
       }).bind(this)
@@ -695,11 +696,11 @@ BattleArena.Models.CappedAttribute = Backbone.Model.extend({
       }
     });
 
-    if (!this.has('value')) {
-      this.get('mixee').set(
-        this.get('name'), BattleArena.Utils.getValue(this.get('minimum'))
-      );
-    }
+    this.get('mixee').set(
+      this.get('name'),
+      this.has('value') ? this.get('value') :
+                          BattleArena.Utils.getValue(this.get('minimum'))
+    );
   },
 
   normalizedSet: function(value) {
