@@ -364,12 +364,12 @@ BattleArena.Models.Hero = Backbone.Model.extend({
         hero.on('change:x', function(hero, value, options) {
           valueBar.set(
             'x',
-            this.get('x') + (this.get('width') - this.get('width') * 0.75) / 2
+            hero.get('x') + (hero.get('width') - hero.get('width') * 0.75) / 2
           );
         });
 
         hero.on('change:y', function(hero, value, options) {
-          valueBar.set('y', this.get('y') - 6 * 2);
+          valueBar.set('y', hero.get('y') - 6 * 2);
         });
       }
     });
