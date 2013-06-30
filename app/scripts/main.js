@@ -58,7 +58,7 @@ window.BattleArena = {
     });
     this.mapView.render();
 
-    var bottomBase = new BattleArena.Models.Base({
+    this.bottomBase = new BattleArena.Models.Base({
       x: this.Config.tileWidth,
       y: (this.Config.horizontalTilesCount * this.Config.tileHeight) -
            this.Config.baseHeight -
@@ -68,13 +68,13 @@ window.BattleArena = {
       fill: this.Config.bottomBaseFill
     });
 
-    var bottomBaseView = new BattleArena.Views.Base({
-      model: bottomBase,
+    this.bottomBaseView = new BattleArena.Views.Base({
+      model: this.bottomBase,
       layer: this.basesLayer
     });
-    bottomBaseView.render()
+    this.bottomBaseView.render();
 
-    var topBase = new BattleArena.Models.Base({
+    this.topBase = new BattleArena.Models.Base({
       x: (this.Config.verticalTilesCount * this.Config.tileWidth) -
            this.Config.baseWidth -
            this.Config.tileWidth,
@@ -84,49 +84,49 @@ window.BattleArena = {
       fill: this.Config.topBaseFill
     });
 
-    var topBaseView = new BattleArena.Views.Base({
-      model: topBase,
+    this.topBaseView = new BattleArena.Views.Base({
+      model: this.topBase,
       layer: this.basesLayer
     });
-    topBaseView.render()
+    this.topBaseView.render();
 
     this.bottomHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.bottomHeroMovementSpeed,
-      x: bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
-      y: bottomBase.get('y') - this.Config.baseHeight,
+      x: this.bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
+      y: this.bottomBase.get('y') - this.Config.baseHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
       fill: this.Config.bottomHeroFill
     });
 
-    var bottomHeroView = new BattleArena.Views.Hero({
+    this.bottomHeroView = new BattleArena.Views.Hero({
       model: this.bottomHero,
       layer: this.heroesLayer,
       hitPointsValueBarLayer: this.valueBarsLayer
     });
-    bottomHeroView.render()
+    this.bottomHeroView.render();
 
     this.topHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.topHeroMovementSpeed,
-      x: topBase.get('x') - this.Config.baseWidth,
-      y: topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
+      x: this.topBase.get('x') - this.Config.baseWidth,
+      y: this.topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
       fill: this.Config.topHeroFill
     });
 
-    var topHeroView = new BattleArena.Views.Hero({
+    this.topHeroView = new BattleArena.Views.Hero({
       model: this.topHero,
       layer: this.heroesLayer,
       hitPointsValueBarLayer: this.valueBarsLayer
     });
-    topHeroView.render()
+    this.topHeroView.render()
 
     this.mapLayer.add(this.mapView.group);
-    this.basesLayer.add(bottomBaseView.group);
-    this.basesLayer.add(topBaseView.group);
-    this.heroesLayer.add(bottomHeroView.group);
-    this.heroesLayer.add(topHeroView.group);
+    this.basesLayer.add(this.bottomBaseView.group);
+    this.basesLayer.add(this.topBaseView.group);
+    this.heroesLayer.add(this.bottomHeroView.group);
+    this.heroesLayer.add(this.topHeroView.group);
 
     this.stage.add(this.mapLayer);
     this.stage.add(this.basesLayer);
@@ -145,16 +145,18 @@ window.BattleArena = {
       tiles: this.map.get('tiles')
     });
 
+    this.hero = this.bottomHero;
+    this.heroView = this.bottomHeroView;
     this.pathfinder = new BattleArena.Models.Pathfinder({
-      hero: this.bottomHero,
+      hero: this.hero,
       tiles: this.map.get('tiles'),
       tilesView: this.mapView.tilesView
     });
 
     var objects = this.objects;
     _([
-       bottomBase,
-       topBase,
+       this.bottomBase,
+       this.topBase,
        this.bottomHero,
        this.topHero
     ]).each(function(object) {
