@@ -43,6 +43,7 @@ window.BattleArena = {
     this.mapLayer = new Kinetic.Layer();
     this.basesLayer = new Kinetic.Layer();
     this.heroesLayer = new Kinetic.Layer();
+    this.valueBarsLayer = new Kinetic.Layer();
 
     this.map = new BattleArena.Models.Map({
       width: this.Config.verticalTilesCount * this.Config.tileWidth,
@@ -94,7 +95,8 @@ window.BattleArena = {
 
     var bottomHeroView = new BattleArena.Views.Hero({
       model: this.bottomHero,
-      layer: this.heroesLayer
+      layer: this.heroesLayer,
+      hitPointsValueBarLayer: this.valueBarsLayer
     });
     bottomHeroView.render()
 
@@ -109,7 +111,8 @@ window.BattleArena = {
 
     var topHeroView = new BattleArena.Views.Hero({
       model: this.topHero,
-      layer: this.heroesLayer
+      layer: this.heroesLayer,
+      hitPointsValueBarLayer: this.valueBarsLayer
     });
     topHeroView.render()
 
@@ -122,6 +125,12 @@ window.BattleArena = {
     this.stage.add(this.mapLayer);
     this.stage.add(this.basesLayer);
     this.stage.add(this.heroesLayer);
+    this.stage.add(this.valueBarsLayer);
+
+    this.mapLayer.setZIndex(0);
+    this.basesLayer.setZIndex(1);
+    this.heroesLayer.setZIndex(2);
+    this.valueBarsLayer.setZIndex(3);
 
     this.objects = new BattleArena.Collections.Objects();
 
@@ -328,8 +337,8 @@ BattleArena.Models.Hero = Backbone.Model.extend({
 
     var hero = this;
     this.hitPointsBar = new BattleArena.Models.ValueBar({
-      x: (this.get('width') - this.get('width') * 0.75) / 2,
-      y: - 6 * 2,
+      x: this.get('x') + (this.get('width') - this.get('width') * 0.75) / 2,
+      y: this.get('y') - 6 * 2,
       width: this.get('width') * 0.75,
       height: 6,
       fill: 'red',
@@ -343,6 +352,17 @@ BattleArena.Models.Hero = Backbone.Model.extend({
       onInitialize: function(valueBar) {
         hero.on('change:hitPoints', function(hero, value, options) {
           valueBar.set('hitPoints', value);
+        });
+
+        hero.on('change:x', function(hero, value, options) {
+          valueBar.set(
+            'x',
+            this.get('x') + (this.get('width') - this.get('width') * 0.75) / 2
+          );
+        });
+
+        hero.on('change:y', function(hero, value, options) {
+          valueBar.set('y', this.get('y') - 6 * 2);
         });
       }
     });
@@ -367,12 +387,13 @@ BattleArena.Views.Hero = Backbone.View.extend({
       draggable: true
     });
 
+    this.layer.add(this.group);
+
     this.hitPointsBarView = new BattleArena.Views.ValueBar({
       model: this.model.hitPointsBar,
-      layer: this.layer
+      layer: this.options.hitPointsValueBarLayer
     });
 
-    this.group.add(this.hitPointsBarView.group);
     this.group.add(this.square);
 
     var heroView = this;
@@ -751,8 +772,10 @@ BattleArena.Views.ValueBar = Backbone.View.extend({
     this.updateWidth();
 
     this.group.add(this.rectangle);
+    this.layer.add(this.group);
 
     this.model.on('change', this.updateWidth, this);
+    this.model.on('change:x change:y', this.updatePosition, this);
   },
 
   updateWidth: function() {
@@ -765,8 +788,18 @@ BattleArena.Views.ValueBar = Backbone.View.extend({
     this.render();
   },
 
+  updatePosition: function() {
+    this.group.setAttrs({
+      x: this.model.get('x'),
+      y: this.model.get('y')
+    });
+
+    this.render();
+  },
+
   render: function() {
     this.layer.draw();
+    return(this);
   }
 });
 
