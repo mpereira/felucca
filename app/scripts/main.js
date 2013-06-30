@@ -68,7 +68,10 @@ window.BattleArena = {
       fill: this.Config.bottomBaseFill
     });
 
-    var bottomBaseView = new BattleArena.Views.Base({ model: bottomBase });
+    var bottomBaseView = new BattleArena.Views.Base({
+      model: bottomBase,
+      layer: this.basesLayer
+    });
     bottomBaseView.render()
 
     var topBase = new BattleArena.Models.Base({
@@ -81,7 +84,10 @@ window.BattleArena = {
       fill: this.Config.topBaseFill
     });
 
-    var topBaseView = new BattleArena.Views.Base({ model: topBase });
+    var topBaseView = new BattleArena.Views.Base({
+      model: topBase,
+      layer: this.basesLayer
+    });
     topBaseView.render()
 
     this.bottomHero = new BattleArena.Models.Hero({
@@ -296,6 +302,7 @@ BattleArena.Models.Base = Backbone.Model.extend({
 BattleArena.Views.Base = Backbone.View.extend({
   initialize: function() {
     this.group = new Kinetic.Group();
+    this.layer = this.options.layer;
 
     var square = new Kinetic.Rect({
       x: this.model.get('x'),
