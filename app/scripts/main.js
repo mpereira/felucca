@@ -12,10 +12,15 @@ window.BattleArena = {
     tileHeight: 40,
     heroWidth: 40,
     heroHeight: 40,
-    baseWidth: 80,
-    baseHeight: 80,
+    baseWidth: 120,
+    baseHeight: 120,
     topBaseFill: 'blue',
     bottomBaseFill: 'red',
+    meleeCreepWidth: 40,
+    meleeCreepHeight: 40,
+    meleeCreepFill: 'green',
+    meleeCreepMovementSpeed: 1,
+    creepSpawnerMeleeCreepsCount: 1,
     heroAttackSpeed: 3,
     heroAttackRange: Math.sqrt(Math.pow(40, 2) + Math.pow(40, 2)), // UPDATE
     heroDamage: 1,
@@ -47,6 +52,7 @@ window.BattleArena = {
     this.mapLayer = new Kinetic.Layer();
     this.basesLayer = new Kinetic.Layer();
     this.heroesLayer = new Kinetic.Layer();
+    this.creepsLayer = new Kinetic.Layer();
     this.valueBarsLayer = new Kinetic.Layer();
 
     this.map = new BattleArena.Models.Map({
@@ -94,10 +100,66 @@ window.BattleArena = {
     });
     this.topBaseView.render();
 
+    var topBase = this.topBase;
+    var bottomBase = this.bottomBase;
+    this.topBaseCreepSpawners = new BattleArena.Collections.CreepSpawners([
+      new BattleArena.Models.CreepSpawner({
+        x: this.topBase.get('x') - this.Config.tileWidth,
+        y: this.topBase.get('y'),
+        path: _({
+          origin: {
+            x: topBase.get('x') - topBase.get('width') / 3,
+            y: topBase.get('y') + topBase.get('height') / 3
+          },
+          destination: {
+            x: bottomBase.get('x') + bottomBase.get('width') / 3,
+            y: bottomBase.get('y') - bottomBase.get('height') / 3
+          }
+        }).reduce(function(memo, value, key, object) {
+          var path = [];
+          var originX = object.origin.x;
+          var originY = object.origin.y;
+          var destinationX = object.destination.x;
+          var destinationY = object.destination.y;
+          var x = originX;
+          var y = originY;
+
+          while (!(x === destinationX && y === destinationY)) {
+            if (x !== destinationX) {
+              x -= BattleArena.Config.tileWidth
+            } else if (y !== destinationY) {
+              y += BattleArena.Config.tileHeight
+            }
+
+            path.push([x, y]);
+          }
+
+          return(path);
+        }),
+        creeps: new BattleArena.Collections.Creeps(
+          _(BattleArena.Config.creepSpawnerMeleeCreepsCount).times(function(index) {
+            return(new BattleArena.Models.MeleeCreep({
+              movementSpeed: BattleArena.Config.meleeCreepMovementSpeed,
+              x: topBase.get('x') - BattleArena.Config.tileWidth,
+              y: topBase.get('y') + BattleArena.Config.tileHeight,
+              width: BattleArena.Config.meleeCreepWidth,
+              height: BattleArena.Config.meleeCreepHeight,
+              fill: BattleArena.Config.meleeCreepFill
+            }));
+          })
+        )
+      })
+    ]);
+    this.topBaseCreepSpawnersView = new BattleArena.Views.CreepSpawners({
+      collection: this.topBaseCreepSpawners,
+      layer: this.creepsLayer
+    });
+    this.topBaseCreepSpawnersView.render();
+
     this.bottomHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.bottomHeroMovementSpeed,
       x: this.bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
-      y: this.bottomBase.get('y') - this.Config.baseHeight,
+      y: this.bottomBase.get('y') - 2 * this.Config.tileWidth,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
       fill: this.Config.bottomHeroFill
@@ -112,7 +174,7 @@ window.BattleArena = {
 
     this.topHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.topHeroMovementSpeed,
-      x: this.topBase.get('x') - this.Config.baseWidth,
+      x: this.topBase.get('x') - 2 * this.Config.tileWidth,
       y: this.topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
@@ -131,16 +193,19 @@ window.BattleArena = {
     this.basesLayer.add(this.topBaseView.group);
     this.heroesLayer.add(this.bottomHeroView.group);
     this.heroesLayer.add(this.topHeroView.group);
+    this.creepsLayer.add(this.topBaseCreepSpawnersView.group);
 
     this.stage.add(this.mapLayer);
     this.stage.add(this.basesLayer);
     this.stage.add(this.heroesLayer);
+    this.stage.add(this.creepsLayer);
     this.stage.add(this.valueBarsLayer);
 
     this.mapLayer.setZIndex(0);
     this.basesLayer.setZIndex(1);
-    this.heroesLayer.setZIndex(2);
-    this.valueBarsLayer.setZIndex(3);
+    this.creepsLayer.setZIndex(2);
+    this.heroesLayer.setZIndex(3);
+    this.valueBarsLayer.setZIndex(4);
 
     this.objects = new BattleArena.Collections.Objects();
 
@@ -281,10 +346,7 @@ BattleArena.Views.Tiles = Backbone.Marionette.CollectionView.extend({
 
   onRender: function() {
     var self = this;
-
-    this.children.each(function(view) {
-      self.group.add(view.group);
-    });
+    this.children.each(function(view) { self.group.add(view.group); });
   }
 });
 
@@ -437,7 +499,7 @@ BattleArena.Views.Hero = Backbone.View.extend({
       stroke: 'yellow',
       fill: this.model.get('fill'),
       strokeWidth: 2,
-      draggable: true
+      // draggable: true
     });
 
     this.layer.add(this.group);
@@ -454,13 +516,13 @@ BattleArena.Views.Hero = Backbone.View.extend({
 
     this.group.add(this.square);
 
-    var heroView = this;
-    this.square.on('dragmove', function(event) {
-      heroView.model.set({
-        x: event.targetNode.getAttr('x'),
-        y: event.targetNode.getAttr('y')
-      });
-    })
+    // var heroView = this;
+    // this.square.on('dragmove', function(event) {
+    //   heroView.model.set({
+    //     x: event.targetNode.getAttr('x'),
+    //     y: event.targetNode.getAttr('y')
+    //   });
+    // })
 
     this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
   },
@@ -674,7 +736,17 @@ BattleArena.Models.Pathfinder = Backbone.Model.extend({
       return;
     }
 
-    this.get('hero').set('path', path);
+    this.get('hero').set('path', _(_(path).map(function(coordinates) {
+      return([
+        coordinates[0] * BattleArena.Config.tileWidth,
+        coordinates[1] * BattleArena.Config.tileHeight
+      ])
+    })).map(function(coordinates) {
+      return([
+        coordinates[0] - coordinates[0] % BattleArena.Config.tileWidth,
+        coordinates[1] - coordinates[1] % BattleArena.Config.tileHeight
+      ])
+    }));
   },
 
   onTileObjectAdd: function(tile, tileObject, tileObjects, options) {
@@ -728,7 +800,7 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
   initialize: function(pathfindable) {
     this.set('pathfindable', pathfindable);
 
-    this.get('pathfindable').set('path', []);
+    this.get('pathfindable').has('path') || this.get('pathfindable').set('path', []);
 
     this.get('pathfindable').on('change:path', this.setDestinationWithThePathsHead, this);
     this.get('pathfindable').on(
@@ -746,8 +818,8 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
     var pathHead = _(this.get('pathfindable').get('path')).head();
 
     this.get('pathfindable').set({
-      destinationX: pathHead[0] * BattleArena.Config.tileWidth,
-      destinationY: pathHead[1] * BattleArena.Config.tileHeight
+      destinationX: pathHead[0],
+      destinationY: pathHead[1]
     });
   },
 
@@ -984,6 +1056,192 @@ BattleArena.Models.Distanceable = Backbone.Model.extend({
       thing.get('x'),
       thing.get('y')
     ));
+  }
+});
+
+BattleArena.Models.MeleeCreep = Backbone.Model.extend({
+  initialize: function() {
+    BattleArena.Utils.mixin(this, BattleArena.Models.Attacker);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Attackable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Distanceable);
+
+    this.movable = new BattleArena.Models.Movable(this);
+    this.pathfindable = new BattleArena.Models.Pathfindable(this);
+
+    this.strength = new BattleArena.Models.CappedAttribute({
+      mixee: this,
+      name: 'strength',
+      minimum: BattleArena.Config.minimumHeroStrength,
+      maximum: BattleArena.Config.maximumHeroStrength
+    });
+
+    var hero = this;
+
+    this.hitPoints = new BattleArena.Models.CappedAttribute({
+      mixee: this,
+      name: 'hitPoints',
+      minimum: 0,
+      value: this.get('strength'),
+      maximum: function() {
+        return(hero.get('strength'));
+      }
+    });
+
+    this.hitPointsBar = new BattleArena.Models.ValueBar({
+      x: this.get('x') + (this.get('width') - this.get('width') * 0.75) / 2,
+      y: this.get('y') - 6 * 2,
+      width: this.get('width') * 0.75,
+      height: 6,
+      fill: 'red',
+      stroke: 'black',
+      strokeWidth: 1,
+      minimumValue: this.hitPoints.get('minimum'),
+      maximumValue: this.hitPoints.get('maximum'),
+      value: function() {
+        return(hero.get('hitPoints'));
+      },
+      onInitialize: function(valueBar) {
+        hero.on('change:hitPoints', function(hero, value, options) {
+          valueBar.set('hitPoints', value);
+        });
+
+        hero.on('change:x', function(hero, value, options) {
+          valueBar.set(
+            'x',
+            hero.get('x') + (hero.get('width') - hero.get('width') * 0.75) / 2
+          );
+        });
+
+        hero.on('change:y', function(hero, value, options) {
+          valueBar.set('y', hero.get('y') - 6 * 2);
+        });
+      }
+    });
+  },
+
+  isAlive: function() {
+    return(this.get('hitPoints') > 0);
+  },
+
+  isDead: function() {
+    return(!this.isAlive());
+  }
+});
+
+BattleArena.Views.Creep = Backbone.View.extend({
+  initialize: function() {
+    this.layer = this.options.layer;
+    this.group = new Kinetic.Group();
+
+    this.group = new Kinetic.Group({
+      x: this.model.get('x'),
+      y: this.model.get('y')
+    });
+
+    this.square = new Kinetic.Rect({
+      width: this.model.get('width'),
+      height: this.model.get('height'),
+      stroke: 'yellow',
+      fill: this.model.get('fill'),
+      strokeWidth: 1
+    });
+
+    BattleArena.Utils.mixin(this, BattleArena.Views.Attackable, {
+      model: this.model,
+      modelView: this
+    });
+
+    this.hitPointsBarView = new BattleArena.Views.ValueBar({
+      model: this.model.hitPointsBar,
+      layer: BattleArena.valueBarsLayer
+    });
+
+    this.group.add(this.square);
+    this.layer.add(this.group);
+
+    this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
+  },
+
+  onChangeXOrChangeY: function(hero, options) {
+    this.group.setAttrs({ x: this.model.get('x'), y: this.model.get('y') });
+    this.render();
+  },
+
+  render: function() {
+    this.layer.draw();
+    return(this);
+  }
+});
+
+BattleArena.Collections.Creeps = Backbone.Collection.extend({
+  model: BattleArena.Models.Creeps
+});
+
+BattleArena.Views.Creeps = Backbone.Marionette.CollectionView.extend({
+  itemView: BattleArena.Views.Creep,
+
+  initialize: function() {
+    this.layer = this.options.layer;
+    this.group = new Kinetic.Group();
+
+    var self = this;
+    this.children.each(function(view) { self.group.add(view.group); });
+  },
+
+  buildItemView: function(item, ItemViewType, itemViewOptions) {
+    return(new ItemViewType(_({
+      model: item, layer: this.layer
+    }).extend(itemViewOptions)));
+  }
+});
+
+BattleArena.Models.CreepSpawner = Backbone.Model.extend({
+  initialize: function() {
+    var creepSpawner = this;
+    this.get('creeps').each(function(creep) {
+      creep.set('path', creepSpawner.get('path'));
+    });
+  }
+});
+
+BattleArena.Collections.CreepSpawners = Backbone.Collection.extend({
+  model: BattleArena.Models.CreepSpawner
+});
+
+BattleArena.Views.CreepSpawner = Backbone.View.extend({
+  initialize: function() {
+    this.layer = this.options.layer;
+    this.group = new Kinetic.Group();
+
+    this.creepsView = new BattleArena.Views.Creeps({
+      collection: this.model.get('creeps'),
+      layer: this.layer
+    });
+
+    this.group.add(this.creepsView.group);
+  },
+
+  render: function() {
+    this.creepsView.render();
+    return(this);
+  }
+});
+
+BattleArena.Views.CreepSpawners = Backbone.Marionette.CollectionView.extend({
+  itemView: BattleArena.Views.CreepSpawner,
+
+  initialize: function() {
+    this.layer = this.options.layer;
+    this.group = new Kinetic.Group();
+
+    var self = this;
+    this.children.each(function(view) { self.group.add(view.group); });
+  },
+
+  buildItemView: function(item, ItemViewType, itemViewOptions) {
+    return(new ItemViewType(_({
+      model: item, layer: this.layer
+    }).extend(itemViewOptions)));
   }
 });
 
