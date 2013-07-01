@@ -586,6 +586,10 @@ BattleArena.Models.Pathfinder = Backbone.Model.extend({
 
     this.get('tilesView').children.each(function(tileView) {
       tileView.square.on('mousedown touchstart', function(event) {
+        if (event.which !== 3) {
+          return;
+        }
+
         pathfinder.pathfindToTile(tileView.model);
         pathfinder.highlightTile(tileView.model);
       }, pathfinder);
@@ -983,4 +987,7 @@ BattleArena.Models.Distanceable = Backbone.Model.extend({
   }
 });
 
-$(document).ready(function () { BattleArena.init(); });
+$(document).ready(function () {
+  $('#container').on('contextmenu', function(event) { return(false); });
+  BattleArena.init();
+});
