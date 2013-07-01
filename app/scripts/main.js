@@ -16,6 +16,9 @@ window.BattleArena = {
     baseHeight: 80,
     topBaseFill: 'blue',
     bottomBaseFill: 'red',
+    heroAttackSpeed: 3,
+    heroAttackRange: Math.sqrt(Math.pow(40, 2) + Math.pow(40, 2)), // UPDATE
+    heroDamage: 1,
     minimumHeroStrength: 10,
     maximumHeroStrength: 100,
     topHeroFill: 'cyan',
@@ -31,7 +34,8 @@ window.BattleArena = {
     tileClickHighlightDuration: 500,
     shouldHighlightPathfinding: true,
     tilePathfindingHighlightFill: '#a4deb2',
-    movementHandlerDelay: 10
+    movementHandlerDelay: 10,
+    attackHandlerDelay: 100
   },
   init: function () {
     this.stage = new Kinetic.Stage({
@@ -180,6 +184,30 @@ BattleArena.Utils = {
   getValue: function(valueOrFunction) {
     return(_(valueOrFunction).isFunction() ? valueOrFunction() : valueOrFunction);
   },
+
+  mixin: function(targetInstance, source, attributesOrOptions) {
+    attributesOrOptions || (attributesOrOptions = {});
+
+    _(_(_(source.prototype).keys()).difference([
+      'constructor', 'initialize'
+    ])).each(function(methodName, index, methodNames) {
+      targetInstance.constructor.prototype[methodName] = source.prototype[methodName];
+    });
+
+    if (source.prototype.set) {
+      source.prototype.set.call(targetInstance, _(attributesOrOptions).extend({
+        mixee: targetInstance
+      }));
+    } else {
+     targetInstance.options = _(targetInstance.options).extend(attributesOrOptions);
+    }
+
+    source.prototype.initialize.call(targetInstance);
+  },
+
+  pixelDistance: function(ax, ay, bx, by) {
+    return(Math.sqrt(Math.pow(ax - bx, 2) + Math.pow(ay - by, 2)));
+  }
 }
 
 BattleArena.Models.Tile = Backbone.Model.extend({
@@ -320,31 +348,39 @@ BattleArena.Views.Base = Backbone.View.extend({
   },
 
   render: function() {
+    this.layer.draw();
     return(this);
   }
 });
 
 BattleArena.Models.Hero = Backbone.Model.extend({
   initialize: function() {
+    BattleArena.Utils.mixin(this, BattleArena.Models.Attacker);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Attackable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Distanceable);
+
     this.movable = new BattleArena.Models.Movable(this);
     this.pathfindable = new BattleArena.Models.Pathfindable(this);
+
     this.strength = new BattleArena.Models.CappedAttribute({
       mixee: this,
       name: 'strength',
       minimum: BattleArena.Config.minimumHeroStrength,
       maximum: BattleArena.Config.maximumHeroStrength
     });
+
+    var hero = this;
+
     this.hitPoints = new BattleArena.Models.CappedAttribute({
       mixee: this,
       name: 'hitPoints',
       minimum: 0,
       value: this.get('strength'),
-      maximum: _(function() {
-        return(this.get('strength'));
-      }).bind(this)
+      maximum: function() {
+        return(hero.get('strength'));
+      }
     });
 
-    var hero = this;
     this.hitPointsBar = new BattleArena.Models.ValueBar({
       x: this.get('x') + (this.get('width') - this.get('width') * 0.75) / 2,
       y: this.get('y') - 6 * 2,
@@ -375,6 +411,14 @@ BattleArena.Models.Hero = Backbone.Model.extend({
         });
       }
     });
+  },
+
+  isAlive: function() {
+    return(this.get('hitPoints') > 0);
+  },
+
+  isDead: function() {
+    return(!this.isAlive());
   }
 });
 
@@ -397,6 +441,11 @@ BattleArena.Views.Hero = Backbone.View.extend({
     });
 
     this.layer.add(this.group);
+
+    BattleArena.Utils.mixin(this, BattleArena.Views.Attackable, {
+      model: this.model,
+      modelView: this
+    });
 
     this.hitPointsBarView = new BattleArena.Views.ValueBar({
       model: this.model.hitPointsBar,
@@ -812,6 +861,126 @@ BattleArena.Views.ValueBar = Backbone.View.extend({
   }
 });
 
-$(document).ready(function () {
-  BattleArena.init();
+BattleArena.Models.Attacker = Backbone.Model.extend({
+  initialize: function() {
+    this.handlerId = setInterval(
+      _(this.handler).bind(this), BattleArena.Config.attackHandlerDelay
+    );
+
+    this.get('mixee').set('attackee', null);
+    this.get('mixee').set('lastHitAttemptedAt', Number.NEGATIVE_INFINITY);
+
+    this.get('mixee').on('change:attackee', this.onChangeMixeeAttackee, this);
+  },
+
+  onChangeMixeeAttackee: function(mixee, attackee, options) {
+    if (this.get('mixee').previous('attackee')) {
+      this.get('mixee').previous('attackee').off(
+        'change:hitPoints', this.onChangeMixeeAttackeeHitPoints, this
+      );
+    }
+
+    if (this.get('mixee').has('attackee')) {
+      this.get('mixee').get('attackee').on(
+        'change:hitPoints', this.onChangeMixeeAttackeeHitPoints, this
+      );
+    }
+  },
+
+  onChangeMixeeAttackeeHitPoints: function(attackee, hitPoints, options) {
+    if (this.get('mixee').has('attackee') && this.get('mixee').get('attackee').isDead()) {
+      this.get('mixee').stopAttacking(this.get('mixee').get('attackee'));
+    }
+  },
+
+  attackRange: function() {
+    return(BattleArena.Config.heroAttackRange);
+  },
+
+  attackSpeed: function() {
+    return(BattleArena.Config.heroAttackSpeed * 1000);
+  },
+
+  isWithinAttackRange: function(creature) {
+    return(this.get('mixee').pixelDistance(creature) <= this.get('mixee').attackRange())
+  },
+
+  hit: function(creature) {
+    creature.receiveHit(this.get('mixee'), BattleArena.Config.heroDamage);
+  },
+
+  attemptHit: function(creature) {
+    this.get('mixee').set('lastHitAttemptedAt', Date.now());
+    this.get('mixee').hit(creature);
+  },
+
+  attack: function(attackee) {
+    return(this.get('mixee').set('attackee', attackee));
+  },
+
+  stopAttacking: function(creature) {
+    return(this.get('mixee').set('attackee', null));
+  },
+
+  handler: function() {
+    if (!this.get('mixee').has('attackee')) {
+      return;
+    }
+
+    if (this.get('mixee').get('attackee').isDead()) {
+      return;
+    }
+
+    if (!this.get('mixee').isWithinAttackRange(this.get('mixee').get('attackee'))) {
+      return;
+    }
+
+    if ((Date.now() - this.get('mixee').get('lastHitAttemptedAt')) >=
+          this.get('mixee').attackSpeed()) {
+      this.get('mixee').attemptHit(this.get('mixee').get('attackee'));
+    }
+  }
 });
+
+BattleArena.Models.Attackable = Backbone.Model.extend({
+  initialize: function() {
+    this.get('mixee').set('attackers', new Backbone.Collection());
+  },
+
+  receiveHit: function(attacker, damage) {
+    this.get('mixee').hitPoints.decrease(damage);
+  }
+});
+
+BattleArena.Views.Attackable = Backbone.View.extend({
+  initialize: function() {
+    this.modelView = this.options.modelView;
+
+    this.modelView.group.on('dblclick dbltap', _(this.onDoubleClick).bind(this));
+  },
+
+  onDoubleClick: function() {
+    if (this.model.get('mixee').isDead()) {
+      return;
+    }
+
+    if (this.model.get('mixee') === BattleArena.hero) {
+      return;
+    }
+
+    BattleArena.hero.attack(this.model.get('mixee'));
+  }
+});
+
+BattleArena.Models.Distanceable = Backbone.Model.extend({
+  pixelDistance: function(thing) {
+    return(BattleArena.Utils.pixelDistance(
+      this.get('mixee').get('x'),
+      this.get('mixee').get('y'),
+      thing.get('x'),
+      thing.get('y')
+    ));
+  }
+});
+
+$(document).ready(function () { BattleArena.init(); });
