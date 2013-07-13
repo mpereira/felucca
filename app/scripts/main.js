@@ -709,7 +709,7 @@ BattleArena.Models.Movable = Backbone.Model.extend({
     }
 
     this.movable.set({ x: x, y: y });
-  },
+  }
 });
 
 BattleArena.Models.Pathfindable = Backbone.Model.extend({
