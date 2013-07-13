@@ -433,8 +433,7 @@ BattleArena.Views.Hero = Backbone.View.extend({
       height: this.model.get('height'),
       stroke: 'yellow',
       fill: this.model.get('fill'),
-      strokeWidth: 2,
-      draggable: true
+      strokeWidth: 2
     });
 
     this.layer.add(this.group);
@@ -450,14 +449,6 @@ BattleArena.Views.Hero = Backbone.View.extend({
     });
 
     this.group.add(this.square);
-
-    var heroView = this;
-    this.square.on('dragmove', function(event) {
-      heroView.model.set({
-        x: event.targetNode.getAttr('x'),
-        y: event.targetNode.getAttr('y')
-      });
-    })
 
     this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
   },
