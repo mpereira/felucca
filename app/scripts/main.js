@@ -97,7 +97,7 @@ window.BattleArena = {
     this.bottomHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.bottomHeroMovementSpeed,
       x: this.bottomBase.get('x') + this.Config.baseWidth + this.Config.tileWidth,
-      y: this.bottomBase.get('y') - this.Config.baseHeight,
+      y: this.bottomBase.get('y') - 2 * this.Config.tileWidth,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
       fill: this.Config.bottomHeroFill
@@ -112,7 +112,7 @@ window.BattleArena = {
 
     this.topHero = new BattleArena.Models.Hero({
       movementSpeed: this.Config.topHeroMovementSpeed,
-      x: this.topBase.get('x') - this.Config.baseWidth,
+      x: this.topBase.get('x') - 2 * this.Config.tileWidth,
       y: this.topBase.get('y') + this.Config.baseHeight + this.Config.tileHeight,
       width: this.Config.heroWidth,
       height: this.Config.heroHeight,
