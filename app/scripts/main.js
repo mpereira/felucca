@@ -281,10 +281,7 @@ BattleArena.Views.Tiles = Backbone.Marionette.CollectionView.extend({
 
   onRender: function() {
     var self = this;
-
-    this.children.each(function(view) {
-      self.group.add(view.group);
-    });
+    this.children.each(function(view) { self.group.add(view.group); });
   }
 });
 
