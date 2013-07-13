@@ -662,7 +662,17 @@ BattleArena.Models.Pathfinder = Backbone.Model.extend({
       return;
     }
 
-    this.get('hero').set('path', path);
+    this.get('hero').set('path', _(_(path).map(function(coordinates) {
+      return([
+        coordinates[0] * BattleArena.Config.tileWidth,
+        coordinates[1] * BattleArena.Config.tileHeight
+      ])
+    })).map(function(coordinates) {
+      return([
+        coordinates[0] - coordinates[0] % BattleArena.Config.tileWidth,
+        coordinates[1] - coordinates[1] % BattleArena.Config.tileHeight
+      ])
+    }));
   },
 
   onTileObjectAdd: function(tile, tileObject, tileObjects, options) {
@@ -716,7 +726,7 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
   initialize: function(pathfindable) {
     this.set('pathfindable', pathfindable);
 
-    this.get('pathfindable').set('path', []);
+    this.get('pathfindable').has('path') || this.get('pathfindable').set('path', []);
 
     this.get('pathfindable').on('change:path', this.setDestinationWithThePathsHead, this);
     this.get('pathfindable').on(
@@ -734,8 +744,8 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
     var pathHead = _(this.get('pathfindable').get('path')).head();
 
     this.get('pathfindable').set({
-      destinationX: pathHead[0] * BattleArena.Config.tileWidth,
-      destinationY: pathHead[1] * BattleArena.Config.tileHeight
+      destinationX: pathHead[0],
+      destinationY: pathHead[1]
     });
   },
 
