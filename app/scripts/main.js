@@ -487,14 +487,6 @@ BattleArena.Models.Hero = Backbone.Model.extend({
         });
       }
     });
-  },
-
-  isAlive: function() {
-    return(this.get('hitPoints') > 0);
-  },
-
-  isDead: function() {
-    return(!this.isAlive());
   }
 });
 
