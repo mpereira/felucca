@@ -80,6 +80,13 @@ window.BattleArena = {
     });
     this.mapView.render();
 
+    this.objects = new BattleArena.Collections.Objects();
+
+    this.objectSpace = new BattleArena.Models.ObjectSpace({
+      objects: this.objects,
+      tiles: this.map.get('tiles')
+    });
+
     this.bottomBase = new BattleArena.Models.Base({
       x: this.Config.tileWidth,
       y: (this.Config.horizontalTilesCount * this.Config.tileHeight) -
@@ -148,6 +155,7 @@ window.BattleArena = {
     this.topBaseView.render();
 
     var topBaseTopLane = this.topBase.get('topLane');
+    var objects = this.objects;
     this.topBaseCreepSpawners = new BattleArena.Collections.CreepSpawners([
       new BattleArena.Models.CreepSpawner({
         x: this.topBase.get('x') - this.Config.tileWidth,
@@ -159,6 +167,7 @@ window.BattleArena = {
         }],
         onCreepSpawn: function(creep) {
           topBaseTopLane.get('creeps').add(creep);
+          objects.add(creep);
         }
       })
     ]);
@@ -219,13 +228,6 @@ window.BattleArena = {
     this.creepsLayer.setZIndex(2);
     this.heroesLayer.setZIndex(3);
     this.valueBarsLayer.setZIndex(4);
-
-    this.objects = new BattleArena.Collections.Objects();
-
-    this.objectSpace = new BattleArena.Models.ObjectSpace({
-      objects: this.objects,
-      tiles: this.map.get('tiles')
-    });
 
     this.hero = this.bottomHero;
     this.heroView = this.bottomHeroView;
