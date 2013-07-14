@@ -32,7 +32,7 @@ window.BattleArena = {
     heroHeight: 40,
     heroAttackSpeed: 3,
     heroAttackRange: Math.sqrt(Math.pow(40, 2) + Math.pow(40, 2)), // UPDATE
-    heroDamage: 1,
+    heroDamage: 5,
     heroMinimumStrength: 10,
     heroMaximumStrength: 100,
 
@@ -168,6 +168,10 @@ window.BattleArena = {
         onCreepSpawn: function(creep) {
           topBaseTopLane.get('creeps').add(creep);
           objects.add(creep);
+        },
+        onCreepDeath: function(creep) {
+          topBaseTopLane.get('creeps').remove(creep);
+          objects.remove(creep);
         }
       })
     ]);
@@ -913,6 +917,11 @@ BattleArena.Views.ValueBar = Backbone.View.extend({
 
     this.model.on('change', this.updateWidth, this);
     this.model.on('change:x change:y', this.updatePosition, this);
+    this.model.on('death', this.destroyShapes, this);
+  },
+
+  destroyShapes: function(model, value, options) {
+    this.group.destroy();
   },
 
   updateWidth: function() {
@@ -1063,12 +1072,24 @@ BattleArena.Models.Distanceable = Backbone.Model.extend({
 });
 
 BattleArena.Models.Life = Backbone.Model.extend({
+  initialize: function() {
+    this.get('mixee').on(
+      'change:hitPoints', this.triggerDeathIfIsDead, this
+    );
+  },
+
   isAlive: function() {
     return(this.get('hitPoints') > 0);
   },
 
   isDead: function() {
     return(!this.isAlive());
+  },
+
+  triggerDeathIfIsDead: function(mixee, hitPoints, options) {
+    if (this.isDead()) {
+      this.trigger('death', mixee, hitPoints, options);
+    }
   }
 });
 
@@ -1128,6 +1149,10 @@ BattleArena.Models.MeleeCreep = Backbone.Model.extend({
         meleeCreep.on('change:y', function(meleeCreep, value, options) {
           valueBar.set('y', meleeCreep.get('y') - 6 * 2);
         });
+
+        meleeCreep.on('death', function(meleeCreep, value, options) {
+          valueBar.trigger('death', meleeCreep, value, options);
+        });
       }
     });
   }
@@ -1165,11 +1190,16 @@ BattleArena.Views.Creep = Backbone.View.extend({
     this.layer.add(this.group);
 
     this.model.on('change:x change:y', this.onChangeXOrChangeY, this);
+    this.model.on('death', this.destroyShapes, this);
   },
 
   onChangeXOrChangeY: function(hero, options) {
     this.group.setAttrs({ x: this.model.get('x'), y: this.model.get('y') });
     this.render();
+  },
+
+  destroyShapes: function(meleeCreep, value, options) {
+    this.group.destroy();
   },
 
   render: function() {
@@ -1216,12 +1246,26 @@ BattleArena.Models.CreepSpawner = Backbone.Model.extend({
   initialize: function() {
     this.has('creeps') || this.set('creeps', new BattleArena.Collections.Creeps());
 
-    this.get('creeps').on('add', this.get('onCreepSpawn'));
+    this.get('creeps').on('add', this.get('onCreepSpawn'), this);
+    this.get('creeps').on('add', this.creepOnDeathRemoveCreepFromCreeps, this);
+    this.get('creeps').on('add', this.creepOnDeathOnCreepDeath, this);
 
     this.spawnCreeps();
 
     this.spawnIntervalId =
       setInterval(_(this.spawnCreeps).bind(this), this.get('interval'));
+  },
+
+  creepOnDeathRemoveCreepFromCreeps: function(creep, creeps, options) {
+    creep.on('death', this.removeCreepFromCreeps, this);
+  },
+
+  creepOnDeathOnCreepDeath: function(creep, creeps, options) {
+    creep.on('death', this.get('onCreepDeath'), this);
+  },
+
+  removeCreepFromCreeps: function(creep, value, options) {
+    this.get('creeps').remove(creep);
   },
 
   spawnCreeps: function() {
