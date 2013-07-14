@@ -431,12 +431,11 @@ BattleArena.Models.Hero = Backbone.Model.extend({
     BattleArena.Utils.mixin(this, BattleArena.Models.Attacker);
     BattleArena.Utils.mixin(this, BattleArena.Models.Attackable);
     BattleArena.Utils.mixin(this, BattleArena.Models.Distanceable);
-
-    this.movable = new BattleArena.Models.Movable(this);
-    this.pathfindable = new BattleArena.Models.Pathfindable(this);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Pathfindable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Movable);
 
     this.strength = new BattleArena.Models.CappedAttribute({
-      mixee: this,
+      owner: this,
       name: 'strength',
       minimum: BattleArena.Config.heroMinimumStrength,
       maximum: BattleArena.Config.heroMaximumStrength
@@ -445,7 +444,7 @@ BattleArena.Models.Hero = Backbone.Model.extend({
     var hero = this;
 
     this.hitPoints = new BattleArena.Models.CappedAttribute({
-      mixee: this,
+      owner: this,
       name: 'hitPoints',
       minimum: 0,
       value: this.get('strength'),
@@ -778,9 +777,7 @@ BattleArena.Models.Pathfinder = Backbone.Model.extend({
 });
 
 BattleArena.Models.Movable = Backbone.Model.extend({
-  initialize: function(movable) {
-    this.movable = movable
-
+  initialize: function() {
     this.movementHandlerIntervalId = setInterval(
       _(this.movementHandler).bind(this),
       BattleArena.Config.movementHandlerDelay
@@ -788,33 +785,31 @@ BattleArena.Models.Movable = Backbone.Model.extend({
   },
 
   movementHandler: function() {
-    var x = this.movable.get('x');
-    var y = this.movable.get('y');
+    var x = this.get('mixee').get('x');
+    var y = this.get('mixee').get('y');
 
-    if (this.movable.get('x') > this.movable.get('destinationX')) {
-      x -= this.movable.get('movementSpeed');
-    } else if (this.movable.get('x') < this.movable.get('destinationX')) {
-      x += this.movable.get('movementSpeed');
+    if (this.get('mixee').get('x') > this.get('mixee').get('destinationX')) {
+      x -= this.get('mixee').get('movementSpeed');
+    } else if (this.get('mixee').get('x') < this.get('mixee').get('destinationX')) {
+      x += this.get('mixee').get('movementSpeed');
     }
 
-    if (this.movable.get('y') > this.movable.get('destinationY')) {
-      y -= this.movable.get('movementSpeed');
-    } else if (this.movable.get('y') < this.movable.get('destinationY')) {
-      y += this.movable.get('movementSpeed');
+    if (this.get('mixee').get('y') > this.get('mixee').get('destinationY')) {
+      y -= this.get('mixee').get('movementSpeed');
+    } else if (this.get('mixee').get('y') < this.get('mixee').get('destinationY')) {
+      y += this.get('mixee').get('movementSpeed');
     }
 
-    this.movable.set({ x: x, y: y });
+    this.get('mixee').set({ x: x, y: y });
   }
 });
 
 BattleArena.Models.Pathfindable = Backbone.Model.extend({
-  initialize: function(pathfindable) {
-    this.set('pathfindable', pathfindable);
+  initialize: function() {
+    this.get('mixee').has('path') || this.get('mixee').set('path', []);
 
-    this.get('pathfindable').has('path') || this.get('pathfindable').set('path', []);
-
-    this.get('pathfindable').on('change:path', this.setDestinationWithThePathsHead, this);
-    this.get('pathfindable').on(
+    this.get('mixee').on('change:path', this.setDestinationWithThePathsHead, this);
+    this.get('mixee').on(
       'change:x change:y change:destinationX change:destinationY',
       this.setPathToItsTailIfOnIntermediateDestination,
       this
@@ -822,30 +817,27 @@ BattleArena.Models.Pathfindable = Backbone.Model.extend({
   },
 
   setDestinationWithThePathsHead: function(creature, value, options) {
-    if (_(this.get('pathfindable').get('path')).isEmpty()) {
+    if (_(this.get('mixee').get('path')).isEmpty()) {
       return;
     }
 
-    var pathHead = _(this.get('pathfindable').get('path')).head();
+    var pathHead = _(this.get('mixee').get('path')).head();
 
-    this.get('pathfindable').set({
-      destinationX: pathHead[0],
-      destinationY: pathHead[1]
-    });
+    this.get('mixee').set({ destinationX: pathHead[0], destinationY: pathHead[1] });
   },
 
   setPathToItsTailIfOnIntermediateDestination: function(creature, value, options) {
-    if (_(this.get('pathfindable').get('path')).isEmpty()) {
+    if (_(this.get('mixee').get('path')).isEmpty()) {
       return;
     }
 
-    if (this.get('pathfindable').get('x') ===
-          this.get('pathfindable').get('destinationX') &&
-          this.get('pathfindable').get('y') ===
-            this.get('pathfindable').get('destinationY')) {
-      this.get('pathfindable').set(
+    if (this.get('mixee').get('x') ===
+          this.get('mixee').get('destinationX') &&
+          this.get('mixee').get('y') ===
+            this.get('mixee').get('destinationY')) {
+      this.get('mixee').set(
         'path',
-        _(this.get('pathfindable').get('path')).tail()
+        _(this.get('mixee').get('path')).tail()
       );
     }
   }
@@ -862,7 +854,7 @@ BattleArena.Models.CappedAttribute = Backbone.Model.extend({
       }
     });
 
-    this.get('mixee').set(
+    this.get('owner').set(
       this.get('name'),
       this.has('value') ? this.get('value') :
                           BattleArena.Utils.getValue(this.get('minimum'))
@@ -878,17 +870,17 @@ BattleArena.Models.CappedAttribute = Backbone.Model.extend({
       value = Number(value.toFixed(1));
     }
 
-    this.get('mixee').set(this.get('name'), value);
+    this.get('owner').set(this.get('name'), value);
 
-    return(this.get('mixee'));
+    return(this.get('owner'));
   },
 
   decrease: function(quantity) {
-    return(this.normalizedSet(this.get('mixee').get(this.get('name')) - quantity));
+    return(this.normalizedSet(this.get('owner').get(this.get('name')) - quantity));
   },
 
   increase: function(quantity) {
-    return(this.normalizedSet(this.get('mixee').get(this.get('name')) + quantity));
+    return(this.normalizedSet(this.get('owner').get(this.get('name')) + quantity));
   }
 });
 
@@ -1085,13 +1077,12 @@ BattleArena.Models.MeleeCreep = Backbone.Model.extend({
     BattleArena.Utils.mixin(this, BattleArena.Models.Attacker);
     BattleArena.Utils.mixin(this, BattleArena.Models.Attackable);
     BattleArena.Utils.mixin(this, BattleArena.Models.Distanceable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Pathfindable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Movable);
     BattleArena.Utils.mixin(this, BattleArena.Models.Life);
 
-    this.movable = new BattleArena.Models.Movable(this);
-    this.pathfindable = new BattleArena.Models.Pathfindable(this);
-
     this.strength = new BattleArena.Models.CappedAttribute({
-      mixee: this,
+      owner: this,
       name: 'strength',
       minimum: BattleArena.Config.meleeCreepMinimumStrength,
       maximum: BattleArena.Config.meleeCreepMaximumStrength
@@ -1100,7 +1091,7 @@ BattleArena.Models.MeleeCreep = Backbone.Model.extend({
     var meleeCreep = this;
 
     this.hitPoints = new BattleArena.Models.CappedAttribute({
-      mixee: this,
+      owner: this,
       name: 'hitPoints',
       minimum: 0,
       value: this.get('strength'),
