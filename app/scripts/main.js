@@ -436,6 +436,7 @@ BattleArena.Models.Hero = Backbone.Model.extend({
     BattleArena.Utils.mixin(this, BattleArena.Models.Attackable);
     BattleArena.Utils.mixin(this, BattleArena.Models.Distanceable);
     BattleArena.Utils.mixin(this, BattleArena.Models.Pathfindable);
+    BattleArena.Utils.mixin(this, BattleArena.Models.Life);
     BattleArena.Utils.mixin(this, BattleArena.Models.Movable);
 
     this.strength = new BattleArena.Models.CappedAttribute({
@@ -484,6 +485,10 @@ BattleArena.Models.Hero = Backbone.Model.extend({
 
         hero.on('change:y', function(hero, value, options) {
           valueBar.set('y', hero.get('y') - 6 * 2);
+        });
+
+        hero.on('death', function(hero, value, options) {
+          valueBar.trigger('destroy', hero, value, options);
         });
       }
     });
@@ -909,7 +914,7 @@ BattleArena.Views.ValueBar = Backbone.View.extend({
 
     this.model.on('change', this.updateWidth, this);
     this.model.on('change:x change:y', this.updatePosition, this);
-    this.model.on('death', this.destroyShapes, this);
+    this.model.on('destroy', this.destroyShapes, this);
   },
 
   destroyShapes: function(model, value, options) {
@@ -1143,7 +1148,7 @@ BattleArena.Models.MeleeCreep = Backbone.Model.extend({
         });
 
         meleeCreep.on('death', function(meleeCreep, value, options) {
-          valueBar.trigger('death', meleeCreep, value, options);
+          valueBar.trigger('destroy', meleeCreep, value, options);
         });
       }
     });

@@ -21,3 +21,5 @@
 - On ObjectSpace make onObjectMovement() only be called on tile change.
 
 - Create new layer for highlighting tiles.
+
+- Abstract common behavior between Hero and MeleeCreep
