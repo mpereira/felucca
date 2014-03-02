@@ -9,8 +9,55 @@
 
 (enable-console-print!)
 
+(defn uuid [] (.v1 (.-uuid js/window)))
+
 (defn console-log [string]
   (.log js/console string))
+
+(defn heterogeneous-zipper [m]
+  (zip/zipper #(constantly true)
+              #(seq (cond (map? %) (vals %) (vector? %) % :else nil))
+              #(constantly %)
+              m))
+
+(defn index-of
+  ([s value] (index-of s value 0))
+  ([s value index]
+   (when-not (empty? s)
+     (if (= value (first s)) index (recur (rest s) value (inc index))))))
+
+(defn heterogeneous-path
+  ([zipper-path value] (heterogeneous-path (reverse zipper-path) value []))
+  ([zipper-path value path]
+   (if (empty? zipper-path)
+     (reverse path)
+     (let [next-value (first zipper-path)
+           value-key (cond
+                       (vector? next-value) (index-of next-value value)
+                       (map? next-value) (get (set/map-invert next-value) value))]
+       (recur (rest zipper-path) next-value (conj path value-key))))))
+
+(defn path [state value]
+  (loop [current-location (heterogeneous-zipper state)]
+    (let [current-node (zip/node current-location)
+          current-path (zip/path current-location)]
+      (if (= (:id current-node) (:id value))
+        (heterogeneous-path current-path current-node)
+        (if (zip/end? current-location)
+          nil
+          (recur (zip/next current-location)))))))
+
+(defn find-view [view selector]
+  (.find view selector))
+
+(defn find-view-by-id [view id]
+  (find-view view (str "#" id)))
+
+(defn find-view-by-name [view name]
+  (find-view view (str "." name)))
+
+(defn to-cursor [state value]
+  {:state state :path (path @state value)})
 
 (let [stats (.Stats js/window)]
   (.setMode stats 0)
@@ -104,8 +151,6 @@
    :movement-handler-delay 10
    :attack-handler-delay 100})
 
-(defn uuid [] (.v1 (.-uuid js/window)))
-
 (defn tiles []
   (let [{:keys [vertical-tiles-count
                 horizontal-tiles-count]} (:map configuration)
@@ -137,9 +182,6 @@
      :fill fill
      :stroke stroke
      :stroke-width stroke-width}))
-
-(defn find-view [canvas id]
-  (.find canvas (str "#" id)))
 
 (defn tile-view [{:keys [path state]}]
   (let [value (get-in @state path)
@@ -187,23 +229,40 @@
 
 (defn hero-views [cursors] (map hero-view cursors))
 
-(defn update-hero-view [canvas hero]
+(defn update-hero-view! [canvas hero]
   (let [{:keys [x y width height fill stroke stroke-width]} hero
-        view (find-view canvas (:id hero))
-        hero-rectangle (.find view ".hero-rectangle")]
+        view (first (find-view-by-id canvas (:id hero)))
+        hero-rectangle (first (find-view-by-name view "hero-rectangle"))]
     (.setAttrs view #js {:x x :y y})
     (.setAttrs hero-rectangle #js {:width width
                                    :height height
-                                   :fill "black"
+                                   :fill fill
                                    :stroke stroke
-                                   :strokeWidth (rand 5)})
+                                   :strokeWidth stroke-width})
     view))
+
+(defn update-creep-view! [canvas creep]
+  ;; (prn creep)
+  (let [{:keys [x y width height fill stroke stroke-width]} creep
+        view (first (find-view-by-id canvas (:id creep)))
+        creep-rectangle (first (find-view-by-name view "creep-rectangle"))]
+    (.setAttrs view #js {:x x :y y})
+    (.setAttrs creep-rectangle #js {:width width
+                                    :height height
+                                    :fill fill
+                                    :stroke stroke
+                                    :strokeWidth stroke-width})
+    view))
+
+(defn update-creep-views! [canvas creeps]
+  (doseq [creep creeps] (update-creep-view! canvas creep)))
 
 (defn creep-view [{:keys [path state]}]
   (let [value (get-in @state path)
         {:keys [id x y width height fill stroke stroke-width]} value
         group (Kinetic.Group. #js {:id id :x x :y y :listening false})
-        rectangle (Kinetic.Rect. #js {:width width
+        rectangle (Kinetic.Rect. #js {:name "creep-rectangle"
+                                      :width width
                                       :height height
                                       :fill fill
                                       :stroke stroke
@@ -223,87 +282,93 @@
 (defn creep-with-name [creeps name]
   (first (set/select #(= (:name %) name) creeps)))
 
+(defn coordinates-within-tile? [coordinates tile]
+  (and
+    (<= (:x tile) (:x coordinates) (+ (:x tile) (:width tile)))
+    (<= (:y tile) (:y coordinates) (+ (:y tile) (:height tile)))))
+
+(defn lane-tile-at [lane coordinates]
+  (first
+    (filter (partial coordinates-within-tile? coordinates) (:tiles lane))))
+
+(defn next-lane-tile [{:keys [tiles]} tile]
+  (second (drop-while (partial not= tile) tiles)))
+
+(defn update-lane-creeps-destination [{:keys [creeps tiles] :as lane}]
+  (map #(assoc %
+               :destination
+               (next-lane-tile lane (lane-tile-at lane (select-keys % [:x :y]))))
+       creeps))
+
 (defn lane [tiles creeps]
-  {:creeps creeps :tiles tiles})
-
-(defn heterogeneous-zipper [m]
-  (zip/zipper #(constantly true)
-              #(seq (cond (map? %) (vals %) (vector? %) % :else nil))
-              #(constantly %)
-              m))
-
-(defn index-of
-  ([s value] (index-of s value 0))
-  ([s value index]
-   (when-not (empty? s)
-     (if (= value (first s)) index (recur (rest s) value (inc index))))))
-
-(defn heterogeneous-path
-  ([zipper-path value] (heterogeneous-path (reverse zipper-path) value []))
-  ([zipper-path value path]
-   (if (empty? zipper-path)
-     (into [] (reverse path))
-     (let [next-value (first zipper-path)
-           value-key (cond
-                       (vector? next-value) (index-of next-value value)
-                       (map? next-value) (get (set/map-invert next-value) value))]
-       (recur (rest zipper-path) next-value (conj path value-key))))))
-
-(defn path [state value]
-  (loop [current-location (heterogeneous-zipper state)]
-    (let [current-node (zip/node current-location)
-          current-path (zip/path current-location)]
-      (if (= current-node value)
-        (heterogeneous-path current-path current-node)
-        (if (zip/end? current-location)
-          nil
-          (recur (zip/next current-location)))))))
+  {:creeps (into [] (update-lane-creeps-destination {:tiles tiles :creeps creeps}))
+   :tiles tiles})
 
 (defn movement-speed [hero]
   1)
 
-(defn to-cursor [state value]
-  {:state state :path (path @state value)})
+(defn move-towards! [state hero tile]
+  (swap! state
+         (fn [state hero tile]
+           (update-in state
+                      (path state hero)
+                      merge
+                      {:destination (select-keys tile [:x :y])}))
+         hero
+         tile))
 
-(defn move-towards [state hero tile]
-  (update-in state
-             (path state hero)
-             merge
-             {:destination (select-keys tile [:x :y])}))
-
-(defn move-towards! [state hero-path tile]
-  (swap! state move-towards hero-path tile))
+(defn next-coordinates [creature]
+  (let [destination (:destination creature)
+        delta-x (- (:x destination) (:x creature))
+        delta-y (- (:y destination) (:y creature))]
+    {:x (cond
+          (pos? delta-x) (movement-speed creature)
+          (neg? delta-x) (- (movement-speed creature))
+          :else 0)
+     :y (cond
+          (pos? delta-y) (movement-speed creature)
+          (neg? delta-y) (- (movement-speed creature))
+          :else 0)}))
 
 (defn next-hero-state [hero]
-  (when-let [destination (:destination hero)]
+  (if-let [destination (:destination hero)]
     (if (= destination (select-keys hero [:x :y]))
       (dissoc hero :destination)
-      (let [delta-x (- (:x destination) (:x hero))
-            delta-y (- (:y destination) (:y hero))]
-        (merge-with +
-                    hero
-                    {:x (cond
-                          (pos? delta-x) (movement-speed hero)
-                          (neg? delta-x) (- (movement-speed hero))
-                          :else 0)
-                     :y (cond
-                          (pos? delta-y) (movement-speed hero)
-                          (neg? delta-y) (- (movement-speed hero))
-                          :else 0)})))))
+      (merge-with + hero (next-coordinates hero)))
+    hero))
+
+(defn next-creep-state [creep]
+  (if-let [destination (:destination creep)]
+    (if (= destination (select-keys creep [:x :y]))
+      (dissoc creep :destination)
+      (merge-with + creep (next-coordinates creep)))
+    creep))
+
+(defn next-creeps-state [creeps]
+  (map next-creep-state creeps))
+
+(defn next-lane-state [{:keys [tiles creeps] :as lane}]
+  {:tiles tiles
+   :creeps (next-creeps-state (update-lane-creeps-destination lane))})
 
 (defn next-state [state]
+  ;; (prn (next-lane-state (get-in state [:teams :dire :lanes :top])))
   (-> state
+      (update-in [:teams :dire :lanes :top] next-lane-state)
       (update-in [:teams :radiant :heroes :lion] next-hero-state)
       (update-in [:teams :dire :heroes :anti-mage] next-hero-state)))
 
 (defn next-state! [state]
   (swap! state next-state))
 
-(defn update-canvas! [canvas state]
-  (update-hero-view canvas (get-in state [:teams :radiant :heroes :lion]))
-  (update-hero-view canvas (get-in state [:teams :dire :heroes :anti-mage])))
+(defn update-canvas! [canvas previous-state current-state]
+  (update-hero-view! canvas (get-in current-state [:teams :radiant :heroes :lion]))
+  (update-hero-view! canvas (get-in current-state [:teams :dire :heroes :anti-mage]))
+  (update-creep-views! canvas (get-in current-state [:teams :dire :lanes :top :creeps])))
 
+;; FIXME update when wanting to animate stuff on new layers.
 (defn draw-canvas! [canvas]
+  (.draw (:creeps layers))
   (.draw (:heroes layers)))
 
 (def canvas
@@ -375,16 +440,18 @@
                                                         (- (/ base-height 2)
                                                            (rem (/ base-height 2)
                                                                 tile-height)))})]
-        dire-top-lane-tiles (into [] (map (fn [a b] {:x a :y b})
+        dire-top-lane-tiles (map (fn [a b] {:x a
+                                            :y b
+                                            :width (get-in configuration [:tiles :width])
+                                            :height (get-in configuration [:tiles :height])})
                                  (range (- (:x dire-base) (* 2 tile-width))
                                         (+ (:x radiant-base)
-                                           (- (/ base-width 2)
-                                              (rem (/ base-width 2) tile-width)))
+                                           (rem (/ base-width 2) tile-width))
                                         (- tile-width))
                                  (repeat (+ (:y dire-base)
                                             (- (/ base-height 2)
                                                (rem (/ base-height 2)
-                                                    tile-height))))))
+                                                    tile-height)))))
         dire-top-lane (lane dire-top-lane-tiles dire-top-lane-creeps)
         ]
     (atom {:teams {:dire {:name "Dire"
@@ -407,9 +474,10 @@
 (let [tiles (get-in @state [:map :tiles])
       bases (map :base (vals (:teams @state)))
       heroes (flatten (map vals (map :heroes (vals (:teams @state)))))
-      creeps (into [] (reduce
-               set/union
-               (map #(get-in % [:lanes :top :creeps]) (vals (:teams @state)))))]
+      teams (:teams @state)
+      dire-creeps (get-in (:dire teams) [:lanes :top :creeps])
+      radiant-creeps (get-in (:radiant teams) [:lanes :top :creeps])
+      creeps (concat dire-creeps radiant-creeps)]
   (doseq [v (tile-views (map (fn [index]
                                {:path (conj [:map :tiles] index) :state state})
                              (range (count tiles))))]
@@ -422,10 +490,14 @@
 
 (move-towards! state (get-in @state [:teams :radiant :heroes :lion]) {:x 500 :y 50})
 (move-towards! state (get-in @state [:teams :dire :heroes :anti-mage]) {:x 50 :y 500})
+;; (move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 0]) {:x 60 :y 60})
+;; (move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 1]) {:x 60 :y 60})
+;; (move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 2]) {:x 60 :y 60})
 
 (go
-  (loop [current-state @state]
-    (update-canvas! canvas current-state)
+  (loop [previous-state @state
+         current-state @state]
+    (update-canvas! canvas previous-state current-state)
     (draw-canvas! canvas)
     (<! (timeout (:state-change-interval configuration)))
-    (recur (next-state! state))))
+    (recur current-state (next-state! state))))
