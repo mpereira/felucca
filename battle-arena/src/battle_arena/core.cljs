@@ -276,18 +276,20 @@
 
 (defn next-hero-state [hero]
   (when-let [destination (:destination hero)]
-    (let [delta-x (- (:x destination) (:x hero))
-          delta-y (- (:y destination) (:y hero))]
-      (merge-with +
-                  hero
-                  {:x (cond
-                        (pos? delta-x) (movement-speed hero)
-                        (neg? delta-x) (- (movement-speed hero))
-                        :else 0)
-                   :y (cond
-                        (pos? delta-y) (movement-speed hero)
-                        (neg? delta-y) (- (movement-speed hero))
-                        :else 0)}))))
+    (if (= destination (select-keys hero [:x :y]))
+      (dissoc hero :destination)
+      (let [delta-x (- (:x destination) (:x hero))
+            delta-y (- (:y destination) (:y hero))]
+        (merge-with +
+                    hero
+                    {:x (cond
+                          (pos? delta-x) (movement-speed hero)
+                          (neg? delta-x) (- (movement-speed hero))
+                          :else 0)
+                     :y (cond
+                          (pos? delta-y) (movement-speed hero)
+                          (neg? delta-y) (- (movement-speed hero))
+                          :else 0)})))))
 
 (defn next-state [state]
   (-> state
