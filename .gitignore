@@ -1,5 +1,9 @@
-node_modules
-temp
-.sass-cache
-app/bower_components
-.tmp/
+/node_modules
+/temp
+/.sass-cache
+/app/bower_components
+/.tmp/
+/battle-arena/.gitignore
+/battle-arena/.nrepl-port
+/battle-arena/repl
+/battle-arena/battle_arena.js
