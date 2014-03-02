@@ -114,16 +114,17 @@
                 fill
                 stroke
                 stroke-width]} (get-in configuration [:tiles])]
-    (for [x (range 0 (* vertical-tiles-count width) width)
-          y (range 0 (* horizontal-tiles-count height) height)]
-      {:id (uuid)
-       :x x
-       :y y
-       :width width
-       :height height
-       :fill fill
-       :stroke stroke
-       :stroke-width stroke-width})))
+    (into []
+          (for [x (range 0 (* vertical-tiles-count width) width)
+                y (range 0 (* horizontal-tiles-count height) height)]
+            {:id (uuid)
+             :x x
+             :y y
+             :width width
+             :height height
+             :fill fill
+             :stroke stroke
+             :stroke-width stroke-width}))))
 
 (defn base [properties]
   (let [{:keys [width height stroke-width]} (:bases configuration)
@@ -141,7 +142,7 @@
   (.find canvas (str "#" id)))
 
 (defn tile-view [{:keys [path state]}]
-  (let [value (get-in state path)
+  (let [value (get-in @state path)
         {:keys [id x y width height fill stroke stroke-width]} value
         group (Kinetic.Group. #js {:id id :x x :y y :listening false})
         rectangle (Kinetic.Rect. #js {:width width
@@ -153,10 +154,10 @@
     (.add group rectangle)
     group))
 
-(defn tile-views [tiles] (map tile-view tiles))
+(defn tile-views [cursors] (map tile-view cursors))
 
 (defn base-view [{:keys [path state]}]
-  (let [value (get-in state path)
+  (let [value (get-in @state path)
         {:keys [id x y width height fill stroke stroke-width]} value
         group (Kinetic.Group. #js {:id id :x x :y y :listening false})
         rectangle (Kinetic.Rect. #js {:width width
@@ -168,10 +169,10 @@
     (.add group rectangle)
     group))
 
-(defn base-views [bases] (map base-view bases))
+(defn base-views [cursors] (map base-view cursors))
 
 (defn hero-view [{:keys [path state]}]
-  (let [value (get-in state path)
+  (let [value (get-in @state path)
         {:keys [id x y width height fill stroke stroke-width]} value
         group (Kinetic.Group. #js {:id id :x x :y y :listening false})
         rectangle (Kinetic.Rect. #js {:name "hero-rectangle"
@@ -184,7 +185,7 @@
     (.add group rectangle)
     group))
 
-(defn hero-views [heroes] (map hero-view heroes))
+(defn hero-views [cursors] (map hero-view cursors))
 
 (defn update-hero-view [canvas hero]
   (let [{:keys [x y width height fill stroke stroke-width]} hero
@@ -199,7 +200,7 @@
     view))
 
 (defn creep-view [{:keys [path state]}]
-  (let [value (get-in state path)
+  (let [value (get-in @state path)
         {:keys [id x y width height fill stroke stroke-width]} value
         group (Kinetic.Group. #js {:id id :x x :y y :listening false})
         rectangle (Kinetic.Rect. #js {:width width
@@ -211,7 +212,7 @@
     (.add group rectangle)
     group))
 
-(defn creep-views [creeps] (map creep-view creeps))
+(defn creep-views [cursors] (map creep-view cursors))
 
 (defn value-bar-view [] (Kinetic.Group. #js {:listening false}))
 (defn value-bar-views [] (Kinetic.Group. #js {:listening false}))
@@ -258,16 +259,11 @@
           nil
           (recur (zip/next current-location)))))))
 
-;; (prn ["nested-map" (= (path {:a 1 :b 2 :c {:d 3 :e {:z 7 :x {:id 2} :w 8} :f {:id 3}}} {:id 2}) [:c :e :x])])
-;; (prn ["nested-vector" (= (path [0 1 2 [3 [6 7 8 9 [10 11 [12]]] 4 5]] 12) [3 1 4 2 0])])
-;; (prn [(path {:a [{:id 1} 2 3]} {:id 1}) [:a 0]])
-;; (prn [(path {:a {:b {:c [1 {:d {:id 4}} 3]}}} {:id 4}) [:a :b :c 1 :d]])
-
 (defn movement-speed [hero]
   1)
 
 (defn to-cursor [state value]
-  {:path (path state value) :state state})
+  {:state state :path (path @state value)})
 
 (defn move-towards [state hero tile]
   (update-in state
@@ -377,7 +373,7 @@
                                                         (- (/ base-height 2)
                                                            (rem (/ base-height 2)
                                                                 tile-height)))})]
-        dire-top-lane-tiles (map (fn [a b] {:x a :y b})
+        dire-top-lane-tiles (into [] (map (fn [a b] {:x a :y b})
                                  (range (- (:x dire-base) (* 2 tile-width))
                                         (+ (:x radiant-base)
                                            (- (/ base-width 2)
@@ -386,7 +382,7 @@
                                  (repeat (+ (:y dire-base)
                                             (- (/ base-height 2)
                                                (rem (/ base-height 2)
-                                                    tile-height)))))
+                                                    tile-height))))))
         dire-top-lane (lane dire-top-lane-tiles dire-top-lane-creeps)
         ]
     (atom {:teams {:dire {:name "Dire"
@@ -412,22 +408,22 @@
       creeps (into [] (reduce
                set/union
                (map #(get-in % [:lanes :top :creeps]) (vals (:teams @state)))))]
-  ;; (doseq [v (tile-views (map (partial to-cursor @state) tiles))] (.add (:tiles layers) v))
-  (doseq [v (base-views (map (partial to-cursor @state) bases))] (.add (:bases layers) v))
-  (doseq [v (hero-views (map (partial to-cursor @state) heroes))] (.add (:heroes layers) v))
-  (doseq [v (creep-views (map (partial to-cursor @state) creeps))] (.add (:creeps layers) v))
+  (doseq [v (tile-views (map (fn [index]
+                               {:path (conj [:map :tiles] index) :state state})
+                             (range (count tiles))))]
+    (.add (:tiles layers) v))
+  (doseq [v (base-views (map (partial to-cursor state) bases))] (.add (:bases layers) v))
+  (doseq [v (hero-views (map (partial to-cursor state) heroes))] (.add (:heroes layers) v))
+  (doseq [v (creep-views (map (partial to-cursor state) creeps))] (.add (:creeps layers) v))
   (.add (:value-bars layers) (value-bar-views))
   (doseq [layer (reverse (vals layers))] (.add canvas layer)))
 
-;; (move-towards! state (get-in @state [:teams :radiant :heroes :lion]) {:x 500 :y 50})
-;; (move-towards! state (get-in @state [:teams :dire :heroes :anti-mage]) {:x 50 :y 500})
+(move-towards! state (get-in @state [:teams :radiant :heroes :lion]) {:x 500 :y 50})
+(move-towards! state (get-in @state [:teams :dire :heroes :anti-mage]) {:x 50 :y 500})
 
-;; (go
-;;   (loop [current-state @state]
-;;     (update-canvas! canvas current-state)
-;;     (draw-canvas! canvas)
-;;     (<! (timeout (:state-change-interval configuration)))
-;;     (recur (next-state! state))))
-
-;; (prn @state)
-;; (prn (get-in (first (get-in @state [:teams])) [:lanes :top]))
+(go
+  (loop [current-state @state]
+    (update-canvas! canvas current-state)
+    (draw-canvas! canvas)
+    (<! (timeout (:state-change-interval configuration)))
+    (recur (next-state! state))))
