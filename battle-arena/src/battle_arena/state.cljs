@@ -46,84 +46,78 @@
 (defn movement-speed [hero]
   1)
 
-(defn creep-coordinates [creep]
-  (select-keys creep [:x :y]))
-
-(defn tile-coordinates [tile]
-  (select-keys tile [:x :y]))
-
-(defn coordinates-within-tile? [coordinates tile]
+(defn coordinates-within-tile? [coordinates {tile-coordinates :coordinates
+                                             tile-dimensions :dimensions}]
   (and
-    (<= (:x tile) (:x coordinates) (+ -1 (:x tile) (:width tile)))
-    (<= (:y tile) (:y coordinates) (+ -1 (:y tile) (:height tile)))))
+    (<= (:x tile-coordinates)
+        (:x coordinates)
+        (+ -1 (:x tile-coordinates) (:width tile-dimensions)))
+    (<= (:y tile-coordinates)
+        (:y coordinates)
+        (+ -1 (:y tile-coordinates) (:height tile-dimensions)))))
 
 (defn lane-tile-at [lane coordinates]
   (first
     (filter (partial coordinates-within-tile? coordinates) (:tiles lane))))
 
-(defn tile-distance [a b]
-  (apply point-distance (map (juxt :x :y) [a b])))
-
 (defn distance [a b]
-  (apply point-distance (map (juxt :x :y) [a b])))
-
-(defn same-coordinates? [a b]
-  (= (creep-coordinates a) (creep-coordinates b)))
+  (apply point-distance (map (juxt :x :y) (map :coordinates [a b]))))
 
 (defn creep-within-tile? [creep tile]
-  (coordinates-within-tile? (creep-coordinates creep) tile))
+  (coordinates-within-tile? (:coodrinates creep) tile))
 
 (defn creep-inside-two-subsequent-tiles-path?
-  [{cx :x cy :y :as creep} [{t1x :x t1y :y} {t2x :x t2y :y} :as tiles]]
-  (or (some (partial creep-within-tile? creep) tiles)
-      (if (= (- t1x t2x) (- t1y t2y)) ;; -45 degrees
-        (or (point-in-triangle? [cx cy]
-                                [[(max t1x t2x) (min t1y t2y)]
-                                 [(max t1x t2x) (max t1y t2y)]
-                                 [(+ (max t1x t2x) (Math/abs (- t1x t2x)))
-                                  (max t1y t2y)]])
-            (point-in-triangle? [cx cy]
-                                [[(min t1x t2x) (max t1y t2y)]
-                                 [(max t1x t2x) (max t1y t2y)]
-                                 [(max t1x t2x)
-                                  (+ (max t1y t2y) (Math/abs (- t1y t2y)))]]))
-        (or (point-in-triangle? [cx cy]
-                                [[(min t1x t2x) (max t1y t2y)]
-                                 [(max t1x t2x) (max t1y t2y)]
-                                 [(max t1x t2x) (min t1y t2y)]])
-            (point-in-triangle? [cx cy]
-                                [[(max t1x t2x)
-                                  (+ (max t1y t2y) (Math/abs (- t1y t2y)))]
-                                 [(max t1x t2x) (max t1y t2y)]
-                                 [(+ (max t1x t2x) (Math/abs (- t1x t2x)))
-                                  (max t1y t2y)]])))))
+  [creep [t0 t1 :as tiles]]
+  (let [tiles-coordinates (map :coordinates tiles)
+        cx (:x (:coordinates creep))
+        cy (:y (:coordinates creep))
+        t0x (:x (get-in t0 [:coordinates :x]))
+        t0y (:y (get-in t0 [:coordinates :y]))
+        t1x (:x (get-in t1 [:coordinates :x]))
+        t1y (:y (get-in t1 [:coordinates :y]))]
+    (or (some (partial creep-within-tile? creep) tiles)
+        (if (= (- t0x t1x) (- t0y t1y)) ;; -45 degrees
+          (or (point-in-triangle? [cx cy]
+                                  [[(max t0x t1x) (min t0y t1y)]
+                                   [(max t0x t1x) (max t0y t1y)]
+                                   [(+ (max t0x t1x) (Math/abs (- t0x t1x)))
+                                    (max t0y t1y)]])
+              (point-in-triangle? [cx cy]
+                                  [[(min t0x t1x) (max t0y t1y)]
+                                   [(max t0x t1x) (max t0y t1y)]
+                                   [(max t0x t1x)
+                                    (+ (max t0y t1y) (Math/abs (- t0y t1y)))]]))
+          (or (point-in-triangle? [cx cy]
+                                  [[(min t0x t1x) (max t0y t1y)]
+                                   [(max t0x t1x) (max t0y t1y)]
+                                   [(max t0x t1x) (min t0y t1y)]])
+              (point-in-triangle? [cx cy]
+                                  [[(max t0x t1x)
+                                    (+ (max t0y t1y) (Math/abs (- t0y t1y)))]
+                                   [(max t0x t1x) (max t0y t1y)]
+                                   [(+ (max t0x t1x) (Math/abs (- t0x t1x)))
+                                    (max t0y t1y)]]))))))
 
 (defn creep-within-lane? [creep {:keys [tiles]}]
   (some #(creep-inside-two-subsequent-tiles-path? creep %)
         (partition 2 1 tiles)))
-
-(defn lane-tile-below-creep [{:keys [tiles]} creep]
-  (first (filter (partial creep-within-tile? creep) tiles)))
 
 (defn tile-closest-to-creep [tiles creep]
   (first (sort-by (partial distance creep) tiles)))
 
 (defn next-lane-tile [{:keys [tiles]} creep]
   (let [t (tile-closest-to-creep tiles creep)]
-    (if (same-coordinates? t (last tiles))
+    (if (= (:coordinates t) (:coordinates (last tiles)))
       (last tiles)
-      (second (drop-while (partial not= t) tiles)))))
+      (second (drop-while #(not= (:coordinates t) (:coordinates %)) tiles)))))
 
 (defn closest-lane-tile [{:keys [tiles]} tile]
   (first (sort-by (partial distance tile) tiles)))
 
 (defn next-lane-creep-destination [lane creep]
-  (if (creep-within-lane? creep lane)
-    (next-lane-tile lane creep)
-    (closest-lane-tile lane creep)))
-
-(defn update-lane-creeps-destination [{:keys [creeps tiles] :as lane}]
-  (map #(assoc % :destination (next-lane-creep-destination lane %)) creeps))
+  (:coordinates (if (creep-within-lane? creep lane)
+                  (next-lane-tile lane creep)
+                  (closest-lane-tile lane creep))))
 
 (defn move-towards! [state hero tile]
   (swap! state
@@ -131,15 +125,16 @@
            (update-in state
                       (path state hero)
                       merge
-                      {:destination (select-keys tile [:x :y])}))
+                      {:destination (:coordinates tile)}))
          hero
          tile))
 
 ;; TODO smaller delta if moving diagonally.
 (defn next-coordinates-delta [creature]
   (let [destination (:destination creature)
-        delta-x (- (:x destination) (:x creature))
-        delta-y (- (:y destination) (:y creature))]
+        coordinates (:coordinates creature)
+        delta-x (- (:x destination) (:x coordinates))
+        delta-y (- (:y destination) (:y coordinates))]
     {:x (cond (pos? delta-x) (movement-speed creature)
               (neg? delta-x) (- (movement-speed creature))
               :else 0)
@@ -147,26 +142,38 @@
               (neg? delta-y) (- (movement-speed creature))
               :else 0)}))
 
+(defn next-coordinates [creature]
+  (merge-with + (:coordinates creature) (next-coordinates-delta creature)))
+
 (defn next-hero-state [hero]
   (if-let [destination (:destination hero)]
-    (if (= (tile-coordinates destination) (select-keys hero [:x :y]))
-      (dissoc hero :destination)
-      (merge-with + hero (next-coordinates-delta hero)))
+    (merge hero
+           (if (= (:coordinates destination) (:coordinates hero))
+             {:destination nil}
+             {:coordinates (next-coordinates hero)}))
     hero))
 
 (defn next-creep-state [creep]
   (if-let [destination (:destination creep)]
-    (if (= (tile-coordinates destination) (creep-coordinates creep))
-      (dissoc creep :destination)
-      (merge-with + creep (next-coordinates-delta creep)))
+    (merge creep
+           (if (= (:coordinates destination) (:coordinates creep))
+             {:destination nil}
+             {:coordinates (next-coordinates creep)}))
     creep))
 
 (defn next-creeps-state [creeps]
   (into [] (map next-creep-state creeps)))
 
+(defn next-lane-creep-state [lane creep]
+  (next-creep-state (merge creep
+                           {:destination (next-lane-creep-destination lane creep)})))
+
+(defn next-lane-creeps-state [lane creeps]
+  (into [] (map (partial next-lane-creep-state lane) creeps)))
+
 (defn next-lane-state [{:keys [tiles creeps] :as lane}]
   {:tiles tiles
-   :creeps (next-creeps-state (update-lane-creeps-destination lane))})
+   :creeps (next-lane-creeps-state lane creeps)})
 
 (defn next-team-state [team])
 (defn next-teams-state [teams] (map next-team-state teams))

@@ -20,14 +20,12 @@
   {:map {:vertical-tiles-count 40
          :horizontal-tiles-count 40}
 
-   :tiles {:width 20
-           :height 20
+   :tiles {:dimensions {:width 20 :height 20}
            :fill "#83AF9B"
            :stroke "#bbb"
            :stroke-width 1}
 
-   :bases {:width 100
-           :height 100
+   :bases {:dimensions {:width 100 :height 100}
            :stroke-width 4
            :top {:fill "blue"
                  :stroke "#abc"}
@@ -35,8 +33,7 @@
                     :stroke "#abc"}}
 
    :heroes #{{:name "Anti-Mage"
-              :width 40
-              :height 40
+              :dimensions {:width 40 :height 40}
               :stroke "yellow"
               :stroke-width 2
               :fill "orange"
@@ -48,8 +45,7 @@
                        :range 128
                        :damage [49 53]}}
              {:name "Lion"
-              :width 40
-              :height 40
+              :dimensions {:width 40 :height 40}
               :stroke "yellow"
               :stroke-width 2
               :fill "cyan"
@@ -62,8 +58,7 @@
                        :damage [49 53]}}}
 
    :creeps #{{:name "Melee Creep"
-              :width 20
-              :height 20
+              :dimensions {:width 20 :height 20}
               :stroke "yellow"
               :stroke-width 2
               :fill "green"
@@ -80,33 +75,27 @@
    :state-change-interval (/ 1000 60)})
 
 (defn tiles []
-  (let [{:keys [vertical-tiles-count
-                horizontal-tiles-count]} (:map configuration)
-        {:keys [width
-                height
+  (let [{:keys [vertical-tiles-count horizontal-tiles-count]} (:map configuration)
+        {:keys [dimensions
                 fill
                 stroke
                 stroke-width]} (get-in configuration [:tiles])]
     (into []
-          (for [x (range 0 (* vertical-tiles-count width) width)
-                y (range 0 (* horizontal-tiles-count height) height)]
+          (for [x (range 0 (* vertical-tiles-count (:width dimensions)) (:width dimensions))
+                y (range 0 (* horizontal-tiles-count (:height dimensions)) (:height dimensions))]
             {:id (uuid)
-             :x x
-             :y y
-             :width width
-             :height height
+             :coordinates {:x x :y y}
+             :dimensions dimensions
              :fill fill
              :stroke stroke
              :stroke-width stroke-width}))))
 
 (defn base [properties]
-  (let [{:keys [width height stroke-width]} (:bases configuration)
-        {:keys [x y fill stroke]} properties]
+  (let [{:keys [dimensions stroke-width]} (:bases configuration)
+        {:keys [coordinates fill stroke]} properties]
     {:id (uuid)
-     :x x
-     :y y
-     :width width
-     :height height
+     :coordinates coordinates
+     :dimensions dimensions
      :fill fill
      :stroke stroke
      :stroke-width stroke-width}))
@@ -120,25 +109,24 @@
 (defn creep-with-name [creeps name]
   (first (set/select #(= (:name %) name) creeps)))
 
-(defn tiles-from-to [from to]
-  (map (fn [x y _] {:x x
-                    :y y
-                    :width (get-in configuration [:tiles :width])
-                    :height (get-in configuration [:tiles :height])})
-       (lazy-cat (range (:x from)
-                        (+ (:x to) (get-in configuration [:tiles :width]))
-                        ((case (> (:x to) (:x from)) true + false - :else +)
-                         (get-in configuration [:tiles :width])))
-                 (repeat (:x to)))
-       (lazy-cat (range (:y from)
-                        (+ (:y to) (get-in configuration [:tiles :height]))
-                        ((case (> (:y to) (:y from)) true + false - :else +)
-                         (get-in configuration [:tiles :height])))
-                 (repeat (:y to)))
-       (range (inc (max (/ (Math/abs (- (:x to) (:x from)))
-                           (get-in configuration [:tiles :width]))
-                        (/ (Math/abs (- (:y to) (:y from)))
-                           (get-in configuration [:tiles :height])))))))
+(defn tiles-from-to [{from-coordinates :coordinates} {to-coordinates :coordinates}]
+  (map (fn [x y _] {:coordinates {:x x :y y}
+                    :dimensions {:width (get-in configuration [:tiles :dimensions :width])
+                                 :height (get-in configuration [:tiles :dimensions :height])}})
+       (lazy-cat (range (:x from-coordinates)
+                        (+ (:x to-coordinates) (get-in configuration [:tiles :dimensions :width]))
+                        ((case (> (:x to-coordinates) (:x from-coordinates)) true + false - :else +)
+                         (get-in configuration [:tiles :dimensions :width])))
+                 (repeat (:x to-coordinates)))
+       (lazy-cat (range (:y from-coordinates)
+                        (+ (:y to-coordinates) (get-in configuration [:tiles :dimensions :height]))
+                        ((case (> (:y to-coordinates) (:y from-coordinates)) true + false - :else +)
+                         (get-in configuration [:tiles :dimensions :height])))
+                 (repeat (:y to-coordinates)))
+       (range (inc (max (/ (Math/abs (- (:x to-coordinates) (:x from-coordinates)))
+                           (get-in configuration [:tiles :dimensions :width]))
+                        (/ (Math/abs (- (:y to-coordinates) (:y from-coordinates)))
+                           (get-in configuration [:tiles :dimensions :height])))))))
 
 (def canvas
   (ui/canvas {:container "canvas-container"
@@ -156,31 +144,45 @@
               :value-bars (ui/layer {:listening false})))
 
 (defn tiles-to-the-top [thing n]
-  (merge thing {:y (- (:y thing) (* n (get-in configuration [:tiles :height])))}))
+  (assoc-in thing
+            [:coordinates :y]
+            (- (get-in thing [:coordinates :y])
+               (* n (get-in configuration [:tiles :dimensions :height])))))
 
 (defn tiles-to-the-bottom [thing n]
-  (merge thing {:y (+ (:y thing) (* n (get-in configuration [:tiles :height])))}))
+  (assoc-in thing
+            [:coordinates :y]
+            (+ (get-in thing [:coordinates :y])
+               (* n (get-in configuration [:tiles :dimensions :height])))))
 
 (defn tiles-to-the-right [thing n]
-  (merge thing {:x (+ (:x thing) (* n (get-in configuration [:tiles :width])))}))
+  (assoc-in thing
+            [:coordinates :x]
+            (+ (get-in thing [:coordinates :x])
+               (* n (get-in configuration [:tiles :dimensions :width])))))
 
 (defn tiles-to-the-left [thing n]
-  (merge thing {:x (- (:x thing) (* n (get-in configuration [:tiles :width])))}))
+  (assoc-in thing
+            [:coordinates :x]
+            (- (get-in thing [:coordinates :x])
+               (* n (get-in configuration [:tiles :dimensions :width])))))
 
 (def state
   (let [
         vertical-tiles-count (get-in configuration [:map :vertical-tiles-count])
         horizontal-tiles-count (get-in configuration [:map :horizontal-tiles-count])
-        tile-width (get-in configuration [:tiles :width])
-        tile-height (get-in configuration [:tiles :height])
-        base-width (get-in configuration [:bases :width])
-        base-height (get-in configuration [:bases :height])
-        dire-base (base (merge (get-in configuration [:bases :top])
+        tile-width (get-in configuration [:tiles :dimensions :width])
+        tile-height (get-in configuration [:tiles :dimensions :height])
+        base-width (get-in configuration [:bases :dimensions :width])
+        base-height (get-in configuration [:bases :dimensions :height])
+        dire-base (base (assoc (get-in configuration [:bases :top])
+                               :coordinates
                                {:x (- (* vertical-tiles-count tile-width)
                                       base-width
                                       tile-width)
                                 :y tile-width}))
-        radiant-base (base (merge (get-in configuration [:bases :bottom])
+        radiant-base (base (assoc (get-in configuration [:bases :bottom])
+                                  :coordinates
                                   {:x tile-width
                                    :y (- (* horizontal-tiles-count tile-height)
                                          base-height
@@ -189,50 +191,55 @@
         lion (hero-with-name (:heroes configuration) "Lion")
         melee-creep (creep-with-name (:creeps configuration) "Melee Creep")
         dire-heroes {:anti-mage (merge anti-mage {:id (uuid)
-                                                  :x (- (:x dire-base)
-                                                        (+ (:width anti-mage)
-                                                           tile-width))
-                                                  :y (+ (:y dire-base)
-                                                        base-height
-                                                        tile-height)})}
+                                                  :coordinates
+                                                  {:x (- (get-in dire-base [:coordinates :x])
+                                                         (+ (get-in anti-mage [:dimensions :width])
+                                                            tile-width))
+                                                   :y (+ (get-in dire-base [:coordinates :y])
+                                                         base-height
+                                                         tile-height)}})}
         radiant-heroes {:lion (merge lion {:id (uuid)
-                                           :x (+ (:x radiant-base)
-                                                 base-width
-                                                 tile-width)
-                                           :y (- (:y radiant-base)
-                                                 (+ (:width lion)
-                                                    tile-height))})}
+                                           :coordinates
+                                           {:x (+ (get-in radiant-base [:coordinates :x])
+                                                  base-width
+                                                  tile-width)
+                                            :y (- (get-in radiant-base [:coordinates :y])
+                                                  (+ (get-in lion [:dimensions :width])
+                                                     tile-height))}})}
         dire-top-lane-creeps [(merge melee-creep {:id (uuid)
-                                                  :x (- (:x dire-base)
-                                                        (* 2 tile-width))
-                                                  :y (+ (:y dire-base)
-                                                        (- (/ base-height 2)
-                                                           (rem (/ base-height 2)
-                                                                tile-height)))})
+                                                  :coordinates
+                                                  {:x (- (get-in dire-base [:coordinates :x])
+                                                         (* 2 tile-width))
+                                                   :y (+ (get-in dire-base [:coordinates :y])
+                                                         (- (/ base-height 2)
+                                                            (rem (/ base-height 2)
+                                                                 tile-height)))}})
                               (merge melee-creep {:id (uuid)
-                                                  :x (- (:x dire-base)
-                                                        (* 4 tile-width))
-                                                  :y (+ (:y dire-base)
-                                                        (- (/ base-height 2)
-                                                           (rem (/ base-height 2)
-                                                                tile-height)))})
+                                                  :coordinates
+                                                  {:x (- (get-in dire-base [:coordinates :x])
+                                                         (* 4 tile-width))
+                                                   :y (+ (get-in dire-base [:coordinates :y])
+                                                         (- (/ base-height 2)
+                                                            (rem (/ base-height 2)
+                                                                 tile-height)))}})
                               (merge melee-creep {:id (uuid)
-                                                  :x (- (:x dire-base)
-                                                        (* 6 tile-width))
-                                                  :y (+ (:y dire-base)
-                                                        (- (/ base-height 2)
-                                                           (rem (/ base-height 2)
-                                                                tile-height)))})]
+                                                  :coordinates
+                                                  {:x (- (get-in dire-base [:coordinates :x])
+                                                         (* 6 tile-width))
+                                                   :y (+ (get-in dire-base [:coordinates :y])
+                                                         (- (/ base-height 2)
+                                                            (rem (/ base-height 2)
+                                                                 tile-height)))}})]
         dire-top-lane-tiles-origin (tiles-to-the-bottom (tiles-to-the-left dire-base
                                                                            2)
                                                         2)
         dire-top-lane-tiles-destination (tiles-to-the-top (tiles-to-the-right radiant-base
                                                                               2)
                                                           2)
-        dire-top-lane-tiles-middle {:x (:x dire-top-lane-tiles-destination)
-                                    :y (:y dire-top-lane-tiles-origin)
-                                    :width (get-in configuration [:tiles :width])
-                                    :height (get-in configuration [:tiles :height])}
+        dire-top-lane-tiles-middle {:coordinates
+                                    {:x (get-in dire-top-lane-tiles-destination [:coordinates :x])
+                                     :y (get-in dire-top-lane-tiles-origin [:coordinates :y])}
+                                    :dimensions (get-in configuration [:tiles :dimensions])}
         dire-top-lane-tiles (distinct (concat (tiles-from-to dire-top-lane-tiles-origin
                                                              dire-top-lane-tiles-middle)
                                               (tiles-from-to dire-top-lane-tiles-middle
@@ -272,62 +279,12 @@
   (ui/add-views (:creeps layers) (ui/creep-views (map (partial to-cursor state) creeps)))
   (ui/add-layers canvas (reverse (vals layers))))
 
-(state/move-towards! state (get-in @state [:teams :radiant :heroes :lion]) {:x 500 :y 50})
-(state/move-towards! state (get-in @state [:teams :dire :heroes :anti-mage]) {:x 50 :y 500})
-;; (state/move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 0]) {:x 60 :y 60})
-;; (state/move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 1]) {:x 60 :y 60})
-;; (state/move-towards! state (get-in @state [:teams :dire :lanes :top :creeps 2]) {:x 60 :y 60})
-
-(log
-  (let [creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    {:coordinates (battle-arena.state/creep-coordinates creep)
-     :destination (select-keys (:destination creep) [:x :y])}))
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])]
-    (last (:tiles lane))))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])]
-    (map #(select-keys % [:x :y :destination]) (:creeps lane))))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])]
-    (map #(select-keys % [:x :y :destination])
-         (battle-arena.state/next-creeps-state
-           (battle-arena.state/update-lane-creeps-destination lane)))))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])]
-    (map #(select-keys % [:x :y :destination])
-         (battle-arena.state/update-lane-creeps-destination lane))))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])
-        creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    (battle-arena.state/creep-within-lane? creep lane)))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])
-        creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    [{:coordinates (battle-arena.state/creep-coordinates creep)
-     :destination (select-keys (:destination creep) [:x :y])}
-     (battle-arena.state/next-lane-tile lane creep)]))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])
-        creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    (battle-arena.state/next-lane-creep-destination lane creep)))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])
-        creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    (battle-arena.state/lane-tile-below-creep lane creep)))
-
-(log
-  (let [lane (get-in @state [:teams :dire :lanes :top])
-        creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    (log [creep (nth (:tiles lane) 2)])
-    (some #(battle-arena.state/creep-within-tile? creep %) (:tiles lane))))
+(state/move-towards! state
+                     (get-in @state [:teams :radiant :heroes :lion])
+                     {:coordinates {:x 500 :y 50}})
+(state/move-towards! state
+                     (get-in @state [:teams :dire :heroes :anti-mage])
+                     {:coordinates {:x 50 :y 500}})
 
 (def tick-chan (chan))
 
@@ -346,6 +303,9 @@
 
 (def fpsmeter (js/FPSMeter.))
 
+(log
+  (let [creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
+    (select-keys creep [:coordinates :destination])))
 (go
   (loop [previous-state @state current-state @state]
     ;; (<! tick-chan)

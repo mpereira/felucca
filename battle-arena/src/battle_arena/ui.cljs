@@ -11,10 +11,13 @@
 
 (defn tile-view [{:keys [path state]}]
   (let [value (get-in @state path)
-        {:keys [id x y width height fill stroke stroke-width]} value
-        group (Kinetic.Group. #js {:id id :x x :y y :listening false})
-        rectangle (Kinetic.Rect. #js {:width width
-                                      :height height
+        {:keys [id coordinates dimensions fill stroke stroke-width]} value
+        group (Kinetic.Group. #js {:id id
+                                   :x (:x coordinates)
+                                   :y (:y coordinates)
+                                   :listening false})
+        rectangle (Kinetic.Rect. #js {:width (:width dimensions)
+                                      :height (:height dimensions)
                                       :fill fill
                                       :stroke stroke
                                       :strokeWidth stroke-width
@@ -26,10 +29,13 @@
 
 (defn base-view [{:keys [path state]}]
   (let [value (get-in @state path)
-        {:keys [id x y width height fill stroke stroke-width]} value
-        group (Kinetic.Group. #js {:id id :x x :y y :listening false})
-        rectangle (Kinetic.Rect. #js {:width width
-                                      :height height
+        {:keys [id coordinates dimensions fill stroke stroke-width]} value
+        group (Kinetic.Group. #js {:id id
+                                   :x (:x coordinates)
+                                   :y (:y coordinates)
+                                   :listening false})
+        rectangle (Kinetic.Rect. #js {:width (:width dimensions)
+                                      :height (:height dimensions)
                                       :fill fill
                                       :stroke stroke
                                       :strokeWidth stroke-width
@@ -41,11 +47,14 @@
 
 (defn hero-view [{:keys [path state]}]
   (let [value (get-in @state path)
-        {:keys [id x y width height fill stroke stroke-width]} value
-        group (Kinetic.Group. #js {:id id :x x :y y :listening false})
+        {:keys [id coordinates dimensions fill stroke stroke-width]} value
+        group (Kinetic.Group. #js {:id id
+                                   :x (:x coordinates)
+                                   :y (:y coordinates)
+                                   :listening false})
         rectangle (Kinetic.Rect. #js {:name "hero-rectangle"
-                                      :width width
-                                      :height height
+                                      :width (:width dimensions)
+                                      :height (:height dimensions)
                                       :fill fill
                                       :stroke stroke
                                       :strokeWidth stroke-width
@@ -56,24 +65,24 @@
 (defn hero-views [cursors] (map hero-view cursors))
 
 (defn update-hero-view! [canvas hero]
-  (let [{:keys [x y width height fill stroke stroke-width]} hero
+  (let [{:keys [coordinates dimensions fill stroke stroke-width]} hero
         view (first (find-view-by-id canvas (:id hero)))
         hero-rectangle (first (find-view-by-name view "hero-rectangle"))]
-    (.setAttrs view #js {:x x :y y})
-    (.setAttrs hero-rectangle #js {:width width
-                                   :height height
+    (.setAttrs view #js {:x (:x coordinates) :y (:y coordinates)})
+    (.setAttrs hero-rectangle #js {:width (:width dimensions)
+                                   :height (:height dimensions)
                                    :fill fill
                                    :stroke stroke
                                    :strokeWidth stroke-width})
     view))
 
 (defn update-creep-view! [canvas creep]
-  (let [{:keys [x y width height fill stroke stroke-width]} creep
+  (let [{:keys [coordinates dimensions fill stroke stroke-width]} creep
         view (first (find-view-by-id canvas (:id creep)))
         creep-rectangle (first (find-view-by-name view "creep-rectangle"))]
-    (.setAttrs view #js {:x x :y y})
-    (.setAttrs creep-rectangle #js {:width width
-                                    :height height
+    (.setAttrs view #js {:x (:x coordinates) :y (:y coordinates)})
+    (.setAttrs creep-rectangle #js {:width (:width dimensions)
+                                    :height (:height dimensions)
                                     :fill fill
                                     :stroke stroke
                                     :strokeWidth stroke-width})
@@ -84,11 +93,14 @@
 
 (defn creep-view [{:keys [path state]}]
   (let [value (get-in @state path)
-        {:keys [id x y width height fill stroke stroke-width]} value
-        group (Kinetic.Group. #js {:id id :x x :y y :listening false})
+        {:keys [id coordinates dimensions fill stroke stroke-width]} value
+        group (Kinetic.Group. #js {:id id
+                                   :x (:x coordinates)
+                                   :y (:y coordinates)
+                                   :listening false})
         rectangle (Kinetic.Rect. #js {:name "creep-rectangle"
-                                      :width width
-                                      :height height
+                                      :width (:width dimensions)
+                                      :height (:height dimensions)
                                       :fill fill
                                       :stroke stroke
                                       :strokeWidth stroke-width
