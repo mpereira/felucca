@@ -81,8 +81,12 @@
                 stroke
                 stroke-width]} (get-in configuration [:tiles])]
     (into []
-          (for [x (range 0 (* vertical-tiles-count (:width dimensions)) (:width dimensions))
-                y (range 0 (* horizontal-tiles-count (:height dimensions)) (:height dimensions))]
+          (for [x (range 0
+                         (* vertical-tiles-count (:width dimensions))
+                         (:width dimensions))
+                y (range 0
+                         (* horizontal-tiles-count (:height dimensions))
+                         (:height dimensions))]
             {:id (uuid)
              :coordinates {:x x :y y}
              :dimensions dimensions
@@ -167,12 +171,18 @@
             (- (get-in thing [:coordinates :x])
                (* n (get-in configuration [:tiles :dimensions :width])))))
 
+(defn tile-with-coordinates [ts c]
+  (first (filter #(= (:coordinates %) c) ts)))
+
+(defn tiles-with-coordinates [ts cs]
+  (map (partial tile-with-coordinates ts) cs))
+
 (def state
-  (let [
-        vertical-tiles-count (get-in configuration [:map :vertical-tiles-count])
+  (let [vertical-tiles-count (get-in configuration [:map :vertical-tiles-count])
         horizontal-tiles-count (get-in configuration [:map :horizontal-tiles-count])
         tile-width (get-in configuration [:tiles :dimensions :width])
         tile-height (get-in configuration [:tiles :dimensions :height])
+        map-tiles (tiles)
         base-width (get-in configuration [:bases :dimensions :width])
         base-height (get-in configuration [:bases :dimensions :height])
         dire-base (base (assoc (get-in configuration [:bases :top])
@@ -190,62 +200,71 @@
         anti-mage (hero-with-name (:heroes configuration) "Anti-Mage")
         lion (hero-with-name (:heroes configuration) "Lion")
         melee-creep (creep-with-name (:creeps configuration) "Melee Creep")
-        dire-heroes {:anti-mage (merge anti-mage {:id (uuid)
-                                                  :coordinates
-                                                  {:x (- (get-in dire-base [:coordinates :x])
-                                                         (+ (get-in anti-mage [:dimensions :width])
-                                                            tile-width))
-                                                   :y (+ (get-in dire-base [:coordinates :y])
-                                                         base-height
-                                                         tile-height)}})}
-        radiant-heroes {:lion (merge lion {:id (uuid)
-                                           :coordinates
-                                           {:x (+ (get-in radiant-base [:coordinates :x])
-                                                  base-width
-                                                  tile-width)
-                                            :y (- (get-in radiant-base [:coordinates :y])
-                                                  (+ (get-in lion [:dimensions :width])
-                                                     tile-height))}})}
-        dire-top-lane-creeps [(merge melee-creep {:id (uuid)
-                                                  :coordinates
-                                                  {:x (- (get-in dire-base [:coordinates :x])
-                                                         (* 2 tile-width))
-                                                   :y (+ (get-in dire-base [:coordinates :y])
-                                                         (- (/ base-height 2)
-                                                            (rem (/ base-height 2)
-                                                                 tile-height)))}})
-                              (merge melee-creep {:id (uuid)
-                                                  :coordinates
-                                                  {:x (- (get-in dire-base [:coordinates :x])
-                                                         (* 4 tile-width))
-                                                   :y (+ (get-in dire-base [:coordinates :y])
-                                                         (- (/ base-height 2)
-                                                            (rem (/ base-height 2)
-                                                                 tile-height)))}})
-                              (merge melee-creep {:id (uuid)
-                                                  :coordinates
-                                                  {:x (- (get-in dire-base [:coordinates :x])
-                                                         (* 6 tile-width))
-                                                   :y (+ (get-in dire-base [:coordinates :y])
-                                                         (- (/ base-height 2)
-                                                            (rem (/ base-height 2)
-                                                                 tile-height)))}})]
-        dire-top-lane-tiles-origin (tiles-to-the-bottom (tiles-to-the-left dire-base
-                                                                           2)
-                                                        2)
-        dire-top-lane-tiles-destination (tiles-to-the-top (tiles-to-the-right radiant-base
-                                                                              2)
-                                                          2)
-        dire-top-lane-tiles-middle {:coordinates
-                                    {:x (get-in dire-top-lane-tiles-destination [:coordinates :x])
-                                     :y (get-in dire-top-lane-tiles-origin [:coordinates :y])}
-                                    :dimensions (get-in configuration [:tiles :dimensions])}
-        dire-top-lane-tiles (distinct (concat (tiles-from-to dire-top-lane-tiles-origin
-                                                             dire-top-lane-tiles-middle)
-                                              (tiles-from-to dire-top-lane-tiles-middle
-                                                             dire-top-lane-tiles-destination)))
-        dire-top-lane (lane dire-top-lane-tiles dire-top-lane-creeps)
-        ]
+        dire-heroes {:anti-mage (merge anti-mage
+                                       {:id (uuid)
+                                        :coordinates
+                                        {:x (- (get-in dire-base [:coordinates :x])
+                                               (+ (get-in anti-mage [:dimensions :width])
+                                                  tile-width))
+                                         :y (+ (get-in dire-base [:coordinates :y])
+                                               base-height
+                                               tile-height)}})}
+        radiant-heroes {:lion (merge lion
+                                     {:id (uuid)
+                                      :coordinates
+                                      {:x (+ (get-in radiant-base [:coordinates :x])
+                                             base-width
+                                             tile-width)
+                                       :y (- (get-in radiant-base [:coordinates :y])
+                                             (+ (get-in lion [:dimensions :width])
+                                                tile-height))}})}
+        dire-top-lane-creeps [(merge melee-creep
+                                     {:id (uuid)
+                                      :coordinates
+                                      {:x (- (get-in dire-base [:coordinates :x])
+                                             (* 2 tile-width))
+                                       :y (+ (get-in dire-base [:coordinates :y])
+                                             (- (/ base-height 2)
+                                                (rem (/ base-height 2)
+                                                     tile-height)))}})
+                              (merge melee-creep
+                                     {:id (uuid)
+                                      :coordinates
+                                      {:x (- (get-in dire-base [:coordinates :x])
+                                             (* 4 tile-width))
+                                       :y (+ (get-in dire-base [:coordinates :y])
+                                             (- (/ base-height 2)
+                                                (rem (/ base-height 2)
+                                                     tile-height)))}})
+                              (merge melee-creep
+                                     {:id (uuid)
+                                      :coordinates
+                                      {:x (- (get-in dire-base [:coordinates :x])
+                                             (* 6 tile-width))
+                                       :y (+ (get-in dire-base [:coordinates :y])
+                                             (- (/ base-height 2)
+                                                (rem (/ base-height 2)
+                                                     tile-height)))}})]
+        dire-top-lane-origin-coordinates (:coordinates
+                                           (tiles-to-the-bottom
+                                             (tiles-to-the-left dire-base 2)
+                                             2))
+        dire-top-lane-destination-coordinates (:coordinates
+                                                (tiles-to-the-top
+                                                  (tiles-to-the-right radiant-base 2)
+                                                  2))
+        dire-top-lane-middle-coordinates {:x (:x dire-top-lane-destination-coordinates)
+                                          :y (:y dire-top-lane-origin-coordinates)}
+        dire-top-lane-coordinates (distinct
+                                    (concat
+                                      (tile-coordinates-from-to
+                                        dire-top-lane-origin-coordinates
+                                        dire-top-lane-middle-coordinates)
+                                      (tile-coordinates-from-to
+                                        dire-top-lane-middle-coordinates
+                                        dire-top-lane-destination-coordinates)))
+        dire-top-lane (lane (tiles-with-coordinates map-tiles dire-top-lane-coordinates)
+                            dire-top-lane-creeps)]
     (atom {:teams {:dire {:name "Dire"
                           :keyword :dire
                           :position :top
@@ -259,7 +278,7 @@
                              :position :bottom
                              :base radiant-base
                              :heroes radiant-heroes}}
-           :map {:tiles (tiles)}
+           :map {:tiles map-tiles}
            :creep-spawners []
            :objects []})))
 
@@ -299,13 +318,10 @@
            ["1000-ticks" 1000]]]
   (.addEventListener (.getElementById js/document (nth t 0))
                    "click"
-                   (fn [e] (.preventDefault e) (dorun (repeatedly (nth t 1) tick)))))
+                   #(do (.preventDefault %) (dorun (repeatedly (nth t 1) tick)))))
 
 (def fpsmeter (js/FPSMeter.))
 
-(log
-  (let [creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
-    (select-keys creep [:coordinates :destination])))
 (go
   (loop [previous-state @state current-state @state]
     ;; (<! tick-chan)
