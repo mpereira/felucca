@@ -7,8 +7,7 @@
                  [org.clojure/core.async "0.1.278.0-76b25b-alpha"]
                  [com.cemerick/piggieback "0.1.3"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]
-            [com.cemerick/austin "0.1.4"]]
+  :plugins [[lein-cljsbuild "1.0.2"]]
 
   :source-paths ["src"]
 
