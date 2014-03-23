@@ -64,7 +64,7 @@
   (apply point-distance (map (juxt :x :y) (map :coordinates [a b]))))
 
 (defn creep-within-tile? [creep tile]
-  (coordinates-within-tile? (:coodrinates creep) tile))
+  (coordinates-within-tile? (:coordinates creep) tile))
 
 (defn creep-inside-two-subsequent-tiles-path?
   [creep [t0 t1 :as tiles]]
