@@ -102,11 +102,18 @@
   (some #(creep-inside-two-subsequent-tiles-path? creep %)
         (partition 2 1 tiles)))
 
+(defn lane-tile-below-creep [{:keys [tiles]} creep]
+  (first (filter (partial creep-within-tile? creep) tiles)))
+
+;; FIXME improve performance.
 (defn tile-closest-to-creep [tiles creep]
   (first (sort-by (partial distance creep) tiles)))
 
-(defn next-lane-tile [{:keys [tiles]} creep]
-  (let [t (tile-closest-to-creep tiles creep)]
+(defn lane-tile-closest-to-creep [lane creep]
+  (first (sort-by (partial distance creep) tiles)))
+
+(defn next-lane-tile [{:keys [tiles] :as lane} creep]
+  (let [t (lane-tile-below-creep lane creep)]
     (if (= (:coordinates t) (:coordinates (last tiles)))
       (last tiles)
       (second (drop-while #(not= (:coordinates t) (:coordinates %)) tiles)))))

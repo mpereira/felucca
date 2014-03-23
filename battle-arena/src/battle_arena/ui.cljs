@@ -1,5 +1,8 @@
 (ns battle-arena.ui)
 
+;; TODO: make group/layer constructors automatically compute their coordinates
+;; and dimensions based on their children.
+
 (defn find-view [view selector]
   (.find view selector))
 
@@ -42,6 +45,27 @@
                                       :listening false})]
     (.add group rectangle)
     group))
+
+(defn lane-view [{:keys [path state]}]
+  (let [value (get-in @state path)
+        outer-group (Kinetic.Group.)]
+    (doseq [{:keys [id coordinates dimensions fill stroke stroke-width]} (:tiles value)]
+      (let [group (Kinetic.Group. #js {:id id
+                                       :x (:x coordinates)
+                                       :y (:y coordinates)
+                                       :listening false})
+            rectangle (Kinetic.Rect. #js {:width (:width dimensions)
+                                          :height (:height dimensions)
+                                          :fill "#BACFC5"
+                                          :stroke "#ddd"
+                                          :strokeWidth stroke-width
+                                          :listening false})]
+        (.add group rectangle)
+        (.add outer-group group)))
+    outer-group))
+
+
+(defn lane-views [cursors] (map lane-view cursors))
 
 (defn base-views [cursors] (map base-view cursors))
 
@@ -144,6 +168,12 @@
     (map? x) (apply js-obj (flatten (map (fn [[k v]] [(cljs->js k) (cljs->js v)]) x)))
     (coll? x) (apply array (map cljs->js x))
     :else x))
+
+(defn cache [shape]
+  (.cache shape (cljs->js {:x (.x shape)
+                           :y (.y shape)
+                           :width (.width shape)
+                           :height (.height shape)})))
 
 (defn canvas [options]
   (Kinetic.Stage. (cljs->js options)))

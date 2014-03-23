@@ -32,6 +32,11 @@
            :bottom {:fill "red"
                     :stroke "#abc"}}
 
+   :lanes {:tiles {:dimensions {:width 20 :height 20}
+                   :fill "#BACFC5"
+                   :stroke "#ddd"
+                   :stroke-width 1}}
+
    :heroes #{{:name "Anti-Mage"
               :dimensions {:width 40 :height 40}
               :stroke "yellow"
@@ -105,7 +110,7 @@
      :stroke-width stroke-width}))
 
 (defn lane [tiles creeps]
-  {:creeps creeps :tiles tiles})
+  {:id (uuid) :creeps creeps :tiles tiles})
 
 (defn hero-with-name [heroes name]
   (first (set/select #(= (:name %) name) heroes)))
@@ -113,24 +118,24 @@
 (defn creep-with-name [creeps name]
   (first (set/select #(= (:name %) name) creeps)))
 
-(defn tiles-from-to [{from-coordinates :coordinates} {to-coordinates :coordinates}]
-  (map (fn [x y _] {:coordinates {:x x :y y}
-                    :dimensions {:width (get-in configuration [:tiles :dimensions :width])
-                                 :height (get-in configuration [:tiles :dimensions :height])}})
-       (lazy-cat (range (:x from-coordinates)
-                        (+ (:x to-coordinates) (get-in configuration [:tiles :dimensions :width]))
-                        ((case (> (:x to-coordinates) (:x from-coordinates)) true + false - :else +)
-                         (get-in configuration [:tiles :dimensions :width])))
-                 (repeat (:x to-coordinates)))
-       (lazy-cat (range (:y from-coordinates)
-                        (+ (:y to-coordinates) (get-in configuration [:tiles :dimensions :height]))
-                        ((case (> (:y to-coordinates) (:y from-coordinates)) true + false - :else +)
-                         (get-in configuration [:tiles :dimensions :height])))
-                 (repeat (:y to-coordinates)))
-       (range (inc (max (/ (Math/abs (- (:x to-coordinates) (:x from-coordinates)))
-                           (get-in configuration [:tiles :dimensions :width]))
-                        (/ (Math/abs (- (:y to-coordinates) (:y from-coordinates)))
-                           (get-in configuration [:tiles :dimensions :height])))))))
+(defn tile-coordinates-from-to [from-coordinates to-coordinates]
+  (let [x-sign (if (> (:x to-coordinates) (:x from-coordinates)) + -)
+        y-sign (if (> (:y to-coordinates) (:y from-coordinates)) + -)]
+    (map (fn [x y _] {:x x :y y})
+         (lazy-cat (range (:x from-coordinates)
+                          (x-sign (:x to-coordinates)
+                                  (get-in configuration [:tiles :dimensions :width]))
+                          (x-sign (get-in configuration [:tiles :dimensions :width])))
+                   (repeat (:x to-coordinates)))
+         (lazy-cat (range (:y from-coordinates)
+                          (y-sign (:y to-coordinates)
+                                  (get-in configuration [:tiles :dimensions :height]))
+                          (y-sign (get-in configuration [:tiles :dimensions :height])))
+                   (repeat (:y to-coordinates)))
+         (range (inc (max (/ (Math/abs (- (:x to-coordinates) (:x from-coordinates)))
+                             (get-in configuration [:tiles :dimensions :width]))
+                          (/ (Math/abs (- (:y to-coordinates) (:y from-coordinates)))
+                             (get-in configuration [:tiles :dimensions :height]))))))))
 
 (def canvas
   (ui/canvas {:container "canvas-container"
@@ -138,14 +143,16 @@
               :height 800
               :listening false}))
 
+(def camera {:x 0 :y 0 :width (* 40 20) :height (* 40 20)})
+
 ;; FIXME actually implement a map sorted by z-index.
 (def layers
-  (sorted-map :tiles (ui/layer {:listening false})
-              :paths (ui/layer {:listening false})
-              :bases (ui/layer {:listening false})
-              :creeps (ui/layer {:listening false})
-              :heroes (ui/layer {:listening false})
-              :value-bars (ui/layer {:listening false})))
+  (sorted-map :tiles (ui/layer (merge camera {:listening false}))
+              :bases (ui/layer (merge camera {:listening false}))
+              :lanes (ui/layer (merge camera {:listening false}))
+              :creeps (ui/layer (merge camera {:listening false}))
+              :heroes (ui/layer (merge camera {:listening false}))
+              :value-bars (ui/layer (merge camera {:listening false}))))
 
 (defn tiles-to-the-top [thing n]
   (assoc-in thing
@@ -285,17 +292,24 @@
 (let [tiles (get-in @state [:map :tiles])
       bases (map :base (vals (:teams @state)))
       heroes (flatten (map vals (map :heroes (vals (:teams @state)))))
+      lanes (filter identity (flatten (map vals (map :lanes (vals (:teams @state))))))
       teams (:teams @state)
       dire-creeps (get-in (:dire teams) [:lanes :top :creeps])
       radiant-creeps (get-in (:radiant teams) [:lanes :top :creeps])
       creeps (concat dire-creeps radiant-creeps)]
   (ui/add-views (:tiles layers)
+                ;; FIXME Manually creating cursors because calling `to-cursor`
+                ;; for thousands of tiles is slow.
                 (ui/tile-views (map (fn [index]
                                       {:path (conj [:map :tiles] index) :state state})
                                     (range (count tiles)))))
   (ui/add-views (:bases layers) (ui/base-views (map (partial to-cursor state) bases)))
+  (ui/add-views (:lanes layers) (ui/lane-views (map (partial to-cursor state) lanes)))
   (ui/add-views (:heroes layers) (ui/hero-views (map (partial to-cursor state) heroes)))
   (ui/add-views (:creeps layers) (ui/creep-views (map (partial to-cursor state) creeps)))
+  (ui/cache (:tiles layers))
+  (ui/cache (:lanes layers))
+  (ui/cache (:bases layers))
   (ui/add-layers canvas (reverse (vals layers))))
 
 (state/move-towards! state
