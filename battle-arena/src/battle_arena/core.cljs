@@ -331,8 +331,8 @@
            ["100-ticks" 100]
            ["1000-ticks" 1000]]]
   (.addEventListener (.getElementById js/document (nth t 0))
-                   "click"
-                   #(do (.preventDefault %) (dorun (repeatedly (nth t 1) tick)))))
+                     "click"
+                     #(do (.preventDefault %) (dorun (repeatedly (nth t 1) tick)))))
 
 (def fpsmeter (js/FPSMeter.))
 
