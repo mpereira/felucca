@@ -18,13 +18,13 @@
         group (Kinetic.Group. #js {:id id
                                    :x (:x coordinates)
                                    :y (:y coordinates)
-                                   :listening false})
+                                   :listening true})
         rectangle (Kinetic.Rect. #js {:width (:width dimensions)
                                       :height (:height dimensions)
                                       :fill fill
                                       :stroke stroke
                                       :strokeWidth stroke-width
-                                      :listening false})]
+                                      :listening true})]
     (.add group rectangle)
     group))
 

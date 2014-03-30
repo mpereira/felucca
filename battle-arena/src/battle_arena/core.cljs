@@ -147,7 +147,7 @@
 
 ;; FIXME actually implement a map sorted by z-index.
 (def layers
-  (sorted-map :tiles (ui/layer (merge camera {:listening false}))
+  (sorted-map :tiles (ui/layer (merge camera {:listening true}))
               :bases (ui/layer (merge camera {:listening false}))
               :lanes (ui/layer (merge camera {:listening false}))
               :creeps (ui/layer (merge camera {:listening false}))
@@ -312,12 +312,6 @@
   (ui/cache (:bases layers))
   (ui/add-layers canvas (reverse (vals layers))))
 
-(state/move-towards! state
-                     (get-in @state [:teams :radiant :heroes :lion])
-                     {:coordinates {:x 500 :y 50}})
-(state/move-towards! state
-                     (get-in @state [:teams :dire :heroes :anti-mage])
-                     {:coordinates {:x 50 :y 500}})
 
 (def tick-chan (chan))
 
@@ -332,7 +326,24 @@
            ["1000-ticks" 1000]]]
   (.addEventListener (.getElementById js/document (nth t 0))
                      "click"
-                     #(do (.preventDefault %) (dorun (repeatedly (nth t 1) tick)))))
+                     #(do
+                        (.preventDefault %)
+                        (dorun (repeatedly (nth t 1) tick)))))
+
+(.addEventListener (.getContainer canvas)
+                   "contextmenu"
+                   #(.preventDefault %)
+                   false)
+
+(.on (:tiles layers)
+     "mouseup tap"
+     #(let [event (.-evt %)]
+        (.preventDefault event)
+        (log "tile click!")
+        (set! (.-tileClick js/window) event)
+        (state/move-towards! state
+                             (get-in @state [:teams :radiant :heroes :lion])
+                             {:coordinates {:x (.-layerX event)
 
 (def fpsmeter (js/FPSMeter.))
 

@@ -43,18 +43,16 @@
 (defn to-cursor [state value]
   {:state state :path (path @state value)})
 
-(defn movement-speed [hero]
-  1)
+(defn movement-speed [creature]
+  (/ (:movement-speed creature) 300))
 
 (defn coordinates-within-tile? [coordinates {tile-coordinates :coordinates
                                              tile-dimensions :dimensions}]
   (and
-    (<= (:x tile-coordinates)
-        (:x coordinates)
-        (+ -1 (:x tile-coordinates) (:width tile-dimensions)))
-    (<= (:y tile-coordinates)
-        (:y coordinates)
-        (+ -1 (:y tile-coordinates) (:height tile-dimensions)))))
+    (and (<= (:x tile-coordinates) (:x coordinates))
+         (< (:x coordinates) (+ (:x tile-coordinates) (:width tile-dimensions))))
+    (and (<= (:y tile-coordinates) (:y coordinates))
+         (< (:y coordinates) (+ (:y tile-coordinates) (:height tile-dimensions))))))
 
 (defn lane-tile-at [lane coordinates]
   (first
@@ -110,7 +108,7 @@
   (first (sort-by (partial distance creep) tiles)))
 
 (defn lane-tile-closest-to-creep [lane creep]
-  (first (sort-by (partial distance creep) tiles)))
+  (first (sort-by (partial distance creep) (:tiles lane))))
 
 (defn next-lane-tile [{:keys [tiles] :as lane} creep]
   (let [t (lane-tile-below-creep lane creep)]
@@ -136,18 +134,25 @@
          hero
          tile))
 
-;; TODO smaller delta if moving diagonally.
 (defn next-coordinates-delta [creature]
-  (let [destination (:destination creature)
-        coordinates (:coordinates creature)
-        delta-x (- (:x destination) (:x coordinates))
-        delta-y (- (:y destination) (:y coordinates))]
-    {:x (cond (pos? delta-x) (movement-speed creature)
-              (neg? delta-x) (- (movement-speed creature))
-              :else 0)
-     :y (cond (pos? delta-y) (movement-speed creature)
-              (neg? delta-y) (- (movement-speed creature))
-              :else 0)}))
+  (let [x0 (get-in creature [:coordinates :x])
+        x1 (get-in creature [:destination :x])
+        y0 (get-in creature [:coordinates :y])
+        y1 (get-in creature [:destination :y])
+        dx (- x1 x0)
+        dy (- y1 y0)
+        scale (Math/sqrt (+ (Math/pow dx 2) (Math/pow dy 2)))
+        v (movement-speed creature)
+        ndx (* v (/ dx scale))
+        ndy (* v (/ dy scale))]
+    {:x (cond
+          (pos? dx) (if (> (+ x0 ndx) x1) dx ndx)
+          (neg? dx) (if (< (+ x0 ndx) x1) dx ndx)
+          :else 0)
+     :y (cond
+          (pos? dy) (if (> (+ y0 ndy) y1) dy ndy)
+          (neg? dy) (if (< (+ y0 ndy) y1) dy ndy)
+          :else 0)}))
 
 (defn next-coordinates [creature]
   (merge-with + (:coordinates creature) (next-coordinates-delta creature)))
@@ -173,7 +178,8 @@
 
 (defn next-lane-creep-state [lane creep]
   (next-creep-state (merge creep
-                           {:destination (next-lane-creep-destination lane creep)})))
+                           {:destination (next-lane-creep-destination lane
+                                                                      creep)})))
 
 (defn next-lane-creeps-state [lane creeps]
   (into [] (map (partial next-lane-creep-state lane) creeps)))
