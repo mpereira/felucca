@@ -2,6 +2,7 @@
   (:require [clojure.zip :as zip]
             [clojure.set :as set]
             [battle-arena.geometry :refer [point-in-triangle?
+                                           point-in-quadrilateral?
                                            point-distance]]))
 
 (defn round [n decimals]
@@ -46,23 +47,17 @@
 (defn movement-speed [creature]
   (/ (:movement-speed creature) 300))
 
-(defn coordinates-within-tile? [coordinates {tile-coordinates :coordinates
-                                             tile-dimensions :dimensions}]
-  (and
-    (and (<= (:x tile-coordinates) (:x coordinates))
-         (< (:x coordinates) (+ (:x tile-coordinates) (:width tile-dimensions))))
-    (and (<= (:y tile-coordinates) (:y coordinates))
-         (< (:y coordinates) (+ (:y tile-coordinates) (:height tile-dimensions))))))
-
-(defn lane-tile-at [lane coordinates]
-  (first
-    (filter (partial coordinates-within-tile? coordinates) (:tiles lane))))
-
 (defn distance [a b]
   (apply point-distance (map (juxt :x :y) (map :coordinates [a b]))))
 
+(defn to-point [thing]
+  ((juxt :x :y) (:coordinates thing)))
+
+(defn to-quadrilateral [thing]
+  (apply conj (to-point thing) ((juxt :width :height) (:dimensions thing))))
+
 (defn creep-within-tile? [creep tile]
-  (coordinates-within-tile? (:coordinates creep) tile))
+  (point-in-quadrilateral? (to-point creep) (to-quadrilateral tile)))
 
 (defn creep-inside-two-subsequent-tiles-path?
   [creep [t0 t1 :as tiles]]
