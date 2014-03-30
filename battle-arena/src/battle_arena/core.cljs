@@ -337,13 +337,19 @@
 
 (.on (:tiles layers)
      "mouseup tap"
-     #(let [event (.-evt %)]
+     #(let [event (.-evt %)
+            lion (get-in @state [:teams :radiant :heroes :lion])]
         (.preventDefault event)
         (log "tile click!")
         (set! (.-tileClick js/window) event)
         (state/move-towards! state
-                             (get-in @state [:teams :radiant :heroes :lion])
-                             {:coordinates {:x (.-layerX event)
+                             lion
+                             {:coordinates {:x (- (.-layerX event)
+                                                  (/ (get-in lion [:dimensions :width])
+                                                     2))
+                                            :y (- (.-layerY event)
+                                                  (/ (get-in lion [:dimensions :height])
+                                                     2))}})))
 
 (def fpsmeter (js/FPSMeter.))
 
