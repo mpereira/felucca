@@ -1,24 +1,23 @@
 (ns battle-arena.geometry)
 
 (defn point-distance [[p0x p0y] [p1x p1y]]
-  (Math/sqrt (+ (Math.pow (Math.abs (- p0x p1x)) 2)
-                (Math.pow (Math.abs (- p0y p1y)) 2))))
+  (Math/sqrt (+ (Math.pow (- p0x p1x) 2) (Math.pow (- p0y p1y) 2))))
 
-(defn point-in-triangle? [[px py] [[p0x p0y] [p1x p1y] [p2x p2y]]]
+(defn point-in-triangle? [[px py] [[t0x t0y] [t1x t1y] [t2x t2y]]]
   (let [n (* 0.5
-             (+ (* (- p1y) p2x)
-                (* p0y (+ (- p1x) p2x))
-                (* p0x (- p1y p2y))
-                (* p1x p2y)))
+             (+ (* (- t1y) t2x)
+                (* t0y (+ (- t1x) t2x))
+                (* t0x (- t1y t2y))
+                (* t1x t2y)))
         sign (if (neg? n) -1 1)
         s (* sign
-             (+ (* p0y p2x)
-                (- (* p0x p2y))
-                (* (- p2y p0y) px)
-                (* (- p0x p2x) py)))
+             (+ (* t0y t2x)
+                (- (* t0x t2y))
+                (* (- t2y t0y) px)
+                (* (- t0x t2x) py)))
         t (* sign
-             (+ (* p0x p1y)
-                (- (* p0y p1x))
-                (* (- p0y p1y) px)
-                (* (- p1x p0x) py)))]
+             (+ (* t0x t1y)
+                (- (* t0y t1x))
+                (* (- t0y t1y) px)
+                (* (- t1x t0x) py)))]
     (and (>= s 0) (>= t 0) (<= (+ s t) (* 2 n sign)))))
