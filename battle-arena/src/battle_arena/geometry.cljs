@@ -22,5 +22,7 @@
                 (* (- t1x t0x) py)))]
     (and (>= s 0) (>= t 0) (<= (+ s t) (* 2 n sign)))))
 
-(defn point-in-quadrilateral? [[px py] [qx qy qw qh]]
-  (and (<= qx px) (< px (+ qx qw)) (<= qy py) (< py (+ qy qh))))
+(defn point-in-rectangle? [[px py] [rx ry rw rh]]
+  (and (<= rx px) (< px (+ rx rw)) (<= ry py) (< py (+ ry rh))))
+
+(defn rectangle-center [[x y w h]] ([(+ x (/ w 2)) (+ y (/ h 2))]))
