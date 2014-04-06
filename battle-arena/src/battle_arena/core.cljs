@@ -72,6 +72,69 @@
 
 ;; Mechanics.
 
+(def configuration
+  {:map {:vertical-tiles-count 40
+         :horizontal-tiles-count 40}
+
+   :tiles {:dimensions {:width 20 :height 20}
+           :fill "#83AF9B"
+           :stroke "#bbb"
+           :stroke-width 1}
+
+   :bases {:dimensions {:width 100 :height 100}
+           :stroke-width 4
+           :top {:fill "blue"
+                 :stroke "#abc"}
+           :bottom {:fill "red"
+                    :stroke "#abc"}}
+
+   :lanes {:tiles {:dimensions {:width 20 :height 20}
+                   :fill "#BACFC5"
+                   :stroke "#ddd"
+                   :stroke-width 1}}
+
+   :heroes #{{:name "Anti-Mage"
+              :dimensions {:width 40 :height 40}
+              :stroke "yellow"
+              :stroke-width 2
+              :fill "orange"
+              :hit-points 530
+              :mana 195
+              :armor 2.08
+              :movement-speed 315
+              :attack {:speed 0.84
+                       :range 128
+                       :damage [49 53]}}
+             {:name "Lion"
+              :dimensions {:width 40 :height 40}
+              :stroke "yellow"
+              :stroke-width 2
+              :fill "cyan"
+              :hit-points 530
+              :mana 195
+              :armor 2.08
+              :movement-speed 315
+              :attack {:speed 0.84
+                       :range 128
+                       :damage [49 53]}}}
+
+   :creeps #{{:name "Melee Creep"
+              :dimensions {:width 20 :height 20}
+              :stroke "yellow"
+              :stroke-width 2
+              :fill "green"
+              :hit-points 550
+              :mana 0
+              :armor 2
+              :movement-speed 325
+              :gold [38 48]
+              :experience 62
+              :attack {:speed 0.5
+                       :range 100
+                       :damage [19 23]}}}
+
+   :state-change-interval (/ 1000 60)})
+
 (defn movement-speed [creature]
   (/ (:movement-speed creature) 300))
 
@@ -282,64 +345,11 @@
 (defn next-state! [state]
   (swap! state next-state))
 
-;; UI.
-
-;; TODO: make group/layer constructors automatically compute their coordinates
-;; and dimensions based on their children.
+;; Views.
 
 (defn find-view [view selector] (.find view selector))
 (defn find-view-by-id [view id] (find-view view (str "#" id)))
 (defn find-view-by-name [view name] (find-view view (str "." name)))
-
-(defn canvas [options]
-  (Kinetic.Stage. (cljs->js options)))
-
-(defn layer [options]
-  (Kinetic.Layer. (cljs->js options)))
-
-(defn add-layer [canvas layer]
-  (.add canvas layer))
-
-(defn add-layers [canvas layers]
-  (doseq [layer layers] (add-layer canvas layer)))
-
-(defn add-view [layer view]
-  (.add layer view))
-
-(defn add-views [layer views]
-  (doseq [view views] (add-view layer view)))
-
-(defn cache [shape]
-  (.cache shape (cljs->js {:x (.x shape)
-                           :y (.y shape)
-                           :width (.width shape)
-                           :height (.height shape)})))
-
-(defn update-canvas! [canvas previous-state current-state]
-  (update-hero-view! canvas (get-in current-state [:teams :radiant :heroes :lion]))
-  (update-hero-view! canvas (get-in current-state [:teams :dire :heroes :anti-mage]))
-  (update-creep-views! canvas (get-in current-state [:teams :dire :lanes :top :creeps])))
-
-(defn draw-canvas! [canvas]
-  (doseq [layer (.getLayers canvas)] (.draw layer)))
-
-;; Views.
-
-(defn hit-points-bar-view [{:keys [path state]}]
-  (let [value (get-in @state path)
-        {:keys [coordinates dimensions]} value
-        width (* 0.75 (:width dimensions))
-        group (Kinetic.Group. #js {:x (:x coordinates)
-                                   :y (- (:y coordinates) 20)
-                                   :listening false})
-        rectangle (Kinetic.Rect. #js {:width width
-                                      :height 20
-                                      :fill "red"
-                                      :stroke "black"
-                                      :strokeWidth 2
-                                      :listening false})]
-    (.add group rectangle)
-    group))
 
 (defn tile-view [{:keys [path state]}]
   (let [value (get-in @state path)
@@ -373,7 +383,6 @@
                                       :strokeWidth stroke-width
                                       :listening false})]
     (.add group rectangle)
-    (.add group (hit-points-bar-view cursor))
     group))
 
 (defn lane-view [{:keys [path state]}]
@@ -393,7 +402,6 @@
         (.add group rectangle)
         (.add outer-group group)))
     outer-group))
-
 
 (defn lane-views [cursors] (map lane-view cursors))
 
@@ -464,73 +472,34 @@
 
 (defn creep-views [cursors] (map creep-view cursors))
 
-(defn value-bar-view [] (Kinetic.Group. #js {:listening false}))
-(defn value-bar-views [] (Kinetic.Group. #js {:listening false}))
+;; UI.
+
+;; TODO: make group/layer constructors automatically compute their coordinates
+;; and dimensions based on their children.
+
+(defn canvas [options] (Kinetic.Stage. (cljs->js options)))
+(defn layer [options] (Kinetic.Layer. (cljs->js options)))
+
+(defn add-layer [canvas layer] (.add canvas layer))
+(defn add-layers [canvas layers] (doseq [layer layers] (add-layer canvas layer)))
+
+(defn add-view [layer view] (.add layer view))
+(defn add-views [layer views] (doseq [view views] (add-view layer view)))
+
+(defn cache [shape]
+  (.cache shape (cljs->js {:x (.x shape)
+                           :y (.y shape)
+                           :width (.width shape)
+                           :height (.height shape)})))
+
+(defn update-canvas! [canvas previous-state current-state]
+  (update-hero-view! canvas (get-in current-state [:teams :radiant :heroes :lion]))
+  (update-hero-view! canvas (get-in current-state [:teams :dire :heroes :anti-mage]))
+  (update-creep-views! canvas (get-in current-state [:teams :dire :lanes :top :creeps])))
+
+(defn draw-canvas! [canvas] (doseq [layer (.getLayers canvas)] (.draw layer)))
 
 ;;
-
-(def configuration
-  {:map {:vertical-tiles-count 40
-         :horizontal-tiles-count 40}
-
-   :tiles {:dimensions {:width 20 :height 20}
-           :fill "#83AF9B"
-           :stroke "#bbb"
-           :stroke-width 1}
-
-   :bases {:dimensions {:width 100 :height 100}
-           :stroke-width 4
-           :top {:fill "blue"
-                 :stroke "#abc"}
-           :bottom {:fill "red"
-                    :stroke "#abc"}}
-
-   :lanes {:tiles {:dimensions {:width 20 :height 20}
-                   :fill "#BACFC5"
-                   :stroke "#ddd"
-                   :stroke-width 1}}
-
-   :heroes #{{:name "Anti-Mage"
-              :dimensions {:width 40 :height 40}
-              :stroke "yellow"
-              :stroke-width 2
-              :fill "orange"
-              :hit-points 530
-              :mana 195
-              :armor 2.08
-              :movement-speed 315
-              :attack {:speed 0.84
-                       :range 128
-                       :damage [49 53]}}
-             {:name "Lion"
-              :dimensions {:width 40 :height 40}
-              :stroke "yellow"
-              :stroke-width 2
-              :fill "cyan"
-              :hit-points 530
-              :mana 195
-              :armor 2.08
-              :movement-speed 315
-              :attack {:speed 0.84
-                       :range 128
-                       :damage [49 53]}}}
-
-   :creeps #{{:name "Melee Creep"
-              :dimensions {:width 20 :height 20}
-              :stroke "yellow"
-              :stroke-width 2
-              :fill "green"
-              :hit-points 550
-              :mana 0
-              :armor 2
-              :movement-speed 325
-              :gold [38 48]
-              :experience 62
-              :attack {:speed 0.5
-                       :range 100
-                       :damage [19 23]}}}
-
-   :state-change-interval (/ 1000 60)})
 
 (defn tiles []
   (let [{:keys [vertical-tiles-count horizontal-tiles-count]} (:map configuration)
@@ -691,11 +660,11 @@
       radiant-creeps (get-in (:radiant teams) [:lanes :top :creeps])
       creeps (concat dire-creeps radiant-creeps)]
   (add-views (get-in ui [:layers :tiles])
-                ;; FIXME Manually creating cursors because calling `to-cursor`
-                ;; for thousands of tiles is slow.
-                (tile-views (map (fn [index]
-                                      {:path (conj [:map :tiles] index) :state state})
-                                    (range (count tiles)))))
+             ;; FIXME Manually creating cursors because calling `to-cursor`
+             ;; for thousands of tiles is slow.
+             (tile-views (map (fn [index]
+                                {:path (conj [:map :tiles] index) :state state})
+                              (range (count tiles)))))
   (add-views (get-in ui [:layers :bases]) (base-views (map (partial to-cursor state) bases)))
   (add-views (get-in ui [:layers :lanes]) (lane-views (map (partial to-cursor state) lanes)))
   (add-views (get-in ui [:layers :heroes]) (hero-views (map (partial to-cursor state) heroes)))
@@ -735,13 +704,13 @@
         (log "tile click!")
         (set! (.-tileClick js/window) event)
         (move-towards! state
-                             lion
-                             {:coordinates {:x (- (.-layerX event)
-                                                  (/ (get-in lion [:dimensions :width])
-                                                     2))
-                                            :y (- (.-layerY event)
-                                                  (/ (get-in lion [:dimensions :height])
-                                                     2))}})))
+                       lion
+                       {:coordinates {:x (- (.-layerX event)
+                                            (/ (get-in lion [:dimensions :width])
+                                               2))
+                                      :y (- (.-layerY event)
+                                            (/ (get-in lion [:dimensions :height])
+                                               2))}})))
 
 (def fpsmeter (js/FPSMeter.))
 
