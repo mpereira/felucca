@@ -224,6 +224,9 @@
                           (/ (Math/abs (- (:y to-coordinates) (:y from-coordinates)))
                              (get-in configuration [:tiles :dimensions :height]))))))))
 
+(defn path-between-objects [a b]
+  (map (juxt :x :y) (tile-coordinates-from-to (:coordinates (lane-tile-below-creep a)) (:coordinates b))))
+
 (defn tiles-to-the-top [thing n]
   (assoc-in thing
             [:coordinates :y]
@@ -330,7 +333,7 @@
       (update-in [:teams :radiant :heroes :lion] next-hero-state)
       (update-in [:teams :dire :heroes :anti-mage] next-hero-state)))
 
-;; State-change related.
+;; State mutation.
 
 (defn move-towards! [state hero tile]
   (swap! state
@@ -338,7 +341,10 @@
            (update-in state
                       (path state hero)
                       merge
-                      {:destination (:coordinates tile)}))
+                      {:destination (:coordinates tile)
+                       :trail {:id (uuid)
+                               :coordinates (:coordinates hero)
+                               :points (path-between-objects hero tile)}}))
          hero
          tile))
 
@@ -350,6 +356,22 @@
 (defn find-view [view selector] (.find view selector))
 (defn find-view-by-id [view id] (find-view view (str "#" id)))
 (defn find-view-by-name [view name] (find-view view (str "." name)))
+
+(defn hit-points-bar-view [{:keys [path state]}]
+  (let [value (get-in @state path)
+        {:keys [coordinates dimensions]} value
+        width (* 0.75 (:width dimensions))
+        group (Kinetic.Group. #js {:x (:x coordinates)
+                                   :y (- (:y coordinates) 20)
+                                   :listening false})
+        rectangle (Kinetic.Rect. #js {:width width
+                                      :height 20
+                                      :fill "red"
+                                      :stroke "black"
+                                      :strokeWidth 2
+                                      :listening false})]
+    (.add group rectangle)
+    group))
 
 (defn tile-view [{:keys [path state]}]
   (let [value (get-in @state path)
@@ -383,6 +405,8 @@
                                       :strokeWidth stroke-width
                                       :listening false})]
     (.add group rectangle)
+    ;; TODO: hit-points-bar-view needs to be injected in the bar-views layer.
+    (.add group (hit-points-bar-view cursor))
     group))
 
 (defn lane-view [{:keys [path state]}]
@@ -409,7 +433,7 @@
 
 (defn hero-view [{:keys [path state]}]
   (let [value (get-in @state path)
-        {:keys [id coordinates dimensions fill stroke stroke-width]} value
+        {:keys [id coordinates dimensions fill stroke stroke-width]}
         group (Kinetic.Group. #js {:id id
                                    :x (:x coordinates)
                                    :y (:y coordinates)
@@ -426,16 +450,48 @@
 
 (defn hero-views [cursors] (map hero-view cursors))
 
-(defn update-hero-view! [canvas hero]
-  (let [{:keys [coordinates dimensions fill stroke stroke-width]} hero
-        view (first (find-view-by-id canvas (:id hero)))
-        hero-rectangle (first (find-view-by-name view "hero-rectangle"))]
+(defn path-view [{:keys [path state]}]
+  (let [value (get-in @state path)
+        {:keys [id coordinates points]} value
+        group (Kinetic.Group. #js {:id id
+                                   :x (:x coordinates)
+                                   :y (:y coordinates)
+                                   :listening false})
+        line (Kinetic.Line. #js {:name "line"
+                                 :points #js []
+                                 :stroke "red"
+                                 :strokeWidth 3})]
+    (.add group rectangle line)
+    group))
+
+(defn path-views [cursors] (map path-view cursors))
+
+(defn update-path-view! [canvas path]
+  (let [view (or (first (find-view-by-id canvas (:id path)))o
+                 (path-view [] path))
+        {:keys [coordinates]} path
+        line (first (find-view-by-name view "line"))]
     (.setAttrs view #js {:x (:x coordinates) :y (:y coordinates)})
     (.setAttrs hero-rectangle #js {:width (:width dimensions)
                                    :height (:height dimensions)
                                    :fill fill
                                    :stroke stroke
                                    :strokeWidth stroke-width})
+    (.setAttrs line #js {:points (cljs->js (flatten path))})
+    view))
+
+(defn update-hero-view! [canvas hero]
+  (let [{:keys [coordinates dimensions fill stroke stroke-width trail]} hero
+        view (first (find-view-by-id canvas (:id hero)))
+        hero-rectangle (first (find-view-by-name view "hero-rectangle"))
+        path-line (first (find-view-by-name view "hero-path-line"))]
+    (.setAttrs view #js {:x (:x coordinates) :y (:y coordinates)})
+    (.setAttrs hero-rectangle #js {:width (:width dimensions)
+                                   :height (:height dimensions)
+                                   :fill fill
+                                   :stroke stroke
+                                   :strokeWidth stroke-width})
+    (.setAttrs path-line #js {:points (cljs->js (flatten trail))})
     view))
 
 (defn update-creep-view! [canvas creep]
@@ -494,6 +550,7 @@
 
 (defn update-canvas! [canvas previous-state current-state]
   (update-hero-view! canvas (get-in current-state [:teams :radiant :heroes :lion]))
+  (update-path-view! canvas (get-in current-state [:teams :radiant :heroes :lion :trail]))
   (update-hero-view! canvas (get-in current-state [:teams :dire :heroes :anti-mage]))
   (update-creep-views! canvas (get-in current-state [:teams :dire :lanes :top :creeps])))
 
@@ -543,6 +600,7 @@
            :layers (sorted-map :tiles (layer (merge camera {:listening true}))
                                :bases (layer (merge camera {:listening false}))
                                :lanes (layer (merge camera {:listening false}))
+                               :paths (layer (merge camera {:listening false})) 
                                :creeps (layer (merge camera {:listening false}))
                                :heroes (layer (merge camera {:listening true}))
                                :bars (layer (merge camera {:listening false})))
@@ -674,6 +732,13 @@
   (cache (get-in ui [:layers :bases]))
   (add-layers (:canvas ui) (reverse (vals (:layers ui)))))
 
+;; (move-towards! state
+;;                      (get-in @state [:teams :radiant :heroes :lion])
+;;                      {:coordinates {:x 500 :y 50}})
+;; (move-towards! state
+;;                      (get-in @state [:teams :dire :heroes :anti-mage])
+;;                      {:coordinates {:x 50 :y 500}})
+
 (def tick-chan (chan))
 
 (defn tick [] (put! tick-chan 1))
@@ -712,7 +777,54 @@
                                             (/ (get-in lion [:dimensions :height])
                                                2))}})))
 
+(.on (get-in ui [:layers :heroes])
+     "dblclick dbltap"
+     #(do
+        (.preventDefault %)
+        (log "hero click!")
+        (set! (.-heroClick js/window) %)))
+
+(def grid
+  (PF/Grid. (get-in configuration [:map :vertical-tiles-count])
+            (get-in configuration [:map :horizontal-tiles-count])))
+
+(def pathfinder
+  (PF/AStarFinder. #js {:allowDiagonal true :dontCrossCorners true}))
+
+(def grid-path (.findPath pathfinder 0 0 10 10 (.clone grid)))
+
+(defn grid [tiles objects])
+
+;; (.log js/console grid-path)
+
+;; (.addEventListener (.getContainer (:canvas ui))
+;;                    "click"
+;;                    #(do (set! (.-foo js/window) %) (.preventDefault %) (log %)))
+
 (def fpsmeter (js/FPSMeter.))
+
+(prn
+  (let [hero (get-in @state [:teams :radiant :heroes :lion])]
+    (select-keys hero [:coordinates :destination :trail])))
+;;
+;; (log
+;;   (let [lane (get-in @state [:teams :dire :lanes :top])
+;;         creep (get-in @state [:teams :dire :lanes :top :creeps 0])]
+;;     (to-rectangle (first (:tiles lane)))))
+
+;;
+;; (log
+;;   (let [lane (get-in @state [:teams :dire :lanes :top])
+;;         creep (get-in @state [:teams :dire :lanes :top :creeps 1])]
+;;     (some (partial creep-within-tile? creep) (:tiles lane))))
+;;
+;; (log
+;;   (let [lane (get-in @state [:teams :dire :lanes :top])
+;;         creep (get-in @state [:teams :dire :lanes :top :creeps 1])]
+;;     (:tiles lane)))
+;;
+;; (println
+;;   (tiles-with-coordinates (get-in @state [:map :tiles]) [{:x 20 :y 0}]))
 
 (go
   (loop [previous-state @state current-state @state]
