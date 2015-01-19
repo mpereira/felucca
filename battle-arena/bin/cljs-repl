@@ -1,2 +1,0 @@
-#!/usr/bin/env sh
-rlwrap -r -m '\\"' -b "(){}[],^%3@\\\";:'" lein trampoline cljsbuild repl-listen
