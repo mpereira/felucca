@@ -37,12 +37,8 @@
         target-position  (.. this target-position)
         controller       (.. this (GetComponent CharacterController))]
     (if (> (vdistance current-position target-position) 1)
-      (let [next-position (v* (.forward (.. this transform))
-                              (.. this movement-speed))
-            next-position-normalized (v3 (.x next-position)
-                                         0
-                                         (.z next-position))]
-        (.. controller (SimpleMove next-position-normalized))))))
+      (.. controller (SimpleMove (v* (.forward (.. this transform))
+                                     (.. this movement-speed)))))))
 
 (defn start! [this]
   (set-target-position! this (.. this transform localPosition)))
