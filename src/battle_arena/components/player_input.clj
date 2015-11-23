@@ -15,33 +15,25 @@
             RaycastHit
             Time]))
 
-(defn start! [this])
-
-(defn hit-points [creature]
-  (.hit-points (.GetComponent creature hero/Component)))
-
-(defn attack-speed [creature]
-  (.attack-speed (.GetComponent creature hero/Component)))
-
-(defn alive? [creature]
-  (< 0 (hit-points creature)))
-
-(defn receive-hit! [creature hit]
-  (let [previous-hit-points (hit-points creature)]
-    (set! (.hit-points (.GetComponent creature hero/Component))
-          (float (- previous-hit-points hit)))))
+(defn moving-towards-target? [this] (.moving-towards-target? this))
+(defn target-position [this] (.target-position this))
+(defn attackee [this] (.attackee this))
+(defn attacking-attackee? [this] (.attacking-attackee? this))
+(defn last-hit-attempted-at [this] (.last-hit-attempted-at this))
 
 (defn recovered-from-previous-hit? [this]
-  (or (not (.last-hit-attempted-at this))
-      (> (- Time/time (.last-hit-attempted-at this)) (attack-speed this))))
+  (or (not (last-hit-attempted-at this))
+      (> (- Time/time (last-hit-attempted-at this))
+         (hero/attack-speed (hero/component this)))))
 
 (defn hit! [this creature]
   (set! (.last-hit-attempted-at this) Time/time)
-  (receive-hit! creature 5))
+  (hero/receive-hit! (hero/component creature) 5))
 
-(defn attempt-hit! [this attackee]
-  (when (and (alive? attackee) (recovered-from-previous-hit? this))
-    (hit! this attackee)))
+(defn attempt-hit! [this creature]
+  (when (and (hero/alive? (hero/component creature))
+             (recovered-from-previous-hit? this))
+    (hit! this creature)))
 
 (defn set-target-position! [this position]
   (set! (.target-position this)
@@ -57,9 +49,8 @@
         (set! (.. this transform localRotation)
               (Quaternion/RotateTowards current-rotation
                                         target-rotation
-                                        (* (.. this
-                                               (GetComponent hero/Component)
-                                               rotation-speed)
+                                        (* (hero/rotation-speed
+                                            (hero/component this))
                                            Time/deltaTime)))))))
 
 (defn move-towards-position! [this position]
@@ -67,9 +58,8 @@
         controller       (.. this (GetComponent CharacterController))]
     (if (> (vdistance current-position position) 1)
       (.SimpleMove controller (v* (.. this transform forward)
-                                  (.. this
-                                      (GetComponent hero/Component)
-                                      movement-speed))))))
+                                  (hero/movement-speed
+                                   (hero/component this)))))))
 
 (defn handle-terrain-click! [this raycast-hit]
   (set! (.attacking-attackee? this) false)
@@ -92,17 +82,15 @@
   (when (.attacking-attackee? this)
     (let [attackee-position (.. this attackee transform localPosition)]
       (look-towards-position! this attackee-position)
-     (move-towards-position! this attackee-position)
-     (when (> 1.2 (vdistance (.. this transform localPosition) attackee-position))
-       (Debug/Log "attempting hit")
-       (attempt-hit! this (.attackee this))))))
+      (move-towards-position! this attackee-position)
+      (when (> 1.2 (vdistance (.. this transform localPosition) attackee-position))
+        (attempt-hit! this (attackee this))))))
 
 (defcomponent PlayerInput [^bool moving-towards-target?
                            ^Vector3 target-position
                            ^GameObject attackee
                            ^bool attacking-attackee?
                            ^float last-hit-attempted-at]
-  (Start  [this] (start!  this))
   (Update [this] (update! this)))
 
 ;; FIXME: trying to `import` types provided by `defcomponent` result in:
@@ -110,3 +98,4 @@
 ;; System.NullReferenceException: Object reference not set to an instance of an
 ;; object
 (def Component PlayerInput)
+(defn component [that] (.GetComponent that Component))

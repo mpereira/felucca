@@ -32,12 +32,12 @@
             Vector3
             WaitForSeconds]))
 
-(defn create-hero [{:keys [name strength attack-speed]}]
+(defn create-hero [{:keys [x z name strength attack-speed]}]
   (let [hero (create-primitive :cube)]
     (h/populate!
       hero
       {:name name
-       :transform [{:local-position [0 (height hero) 0]
+       :transform [{:local-position [x (height hero) z]
                     :local-rotation (Quaternion/Euler 0 0 0)
                     :local-scale [1 2 1]}]
        :character-controller [{:radius 0.5}]})
@@ -46,20 +46,16 @@
     (set! (.. hero (GetComponent hero/Component) attack-speed) attack-speed)
     hero))
 
-(defn create-enemy-hero [{:keys [movement-speed rotation-speed player-hero
-                                 aggressiveness-radius]
-                          :as attributes}]
-  (let [enemy-hero (create-hero (select-keys attributes [:name :strength
-                                                         :attack-speed]))]
+(defn create-enemy-hero [{:keys [aggressiveness-radius] :as attributes}]
+  (let [enemy-hero (create-hero attributes)]
     (.AddComponent enemy-hero enemy/Component)
     (set! (.. enemy-hero (GetComponent enemy/Component) player-hero) player-hero)
     (set! (.. enemy-hero (GetComponent enemy/Component) aggressiveness-radius)
           aggressiveness-radius)
     enemy-hero))
 
-(defn create-player [{:keys [camera movement-speed rotation-speed] :as attributes}]
-  (let [player (create-hero (select-keys attributes [:name :strength
-                                                     :attack-speed]))]
+(defn create-player [{:keys [movement-speed rotation-speed] :as attributes}]
+  (let [player (create-hero attributes)]
     (.AddComponent player player-input/Component)
     (set! (.. player (GetComponent hero/Component) movement-speed)
           movement-speed)
@@ -69,12 +65,11 @@
 
 (defn create-terrain []
   (-> (create-primitive :plane)
-      (#(h/populate!
-          %
-          {:name "Terrain"
-           :transform [{:local-position [0 0 0]
-                        :local-rotation [0 0 0 0]
-                        :local-scale [5 1 5]}]}))))
+      (h/populate!
+       {:name "Terrain"
+        :transform [{:local-position [0 0 0]
+                     :local-rotation [0 0 0 0]
+                     :local-scale [5 1 5]}]})))
 
 (defn start []
   (def player-hero-material (Material. (Shader/Find "Specular")))
@@ -90,13 +85,16 @@
   (set! (.color terrain-material) (Color. 0.4 0.8 0.2))
 
   (def player-hero (create-player {:name "Player Hero"
+                                   :x -5
+                                   :z -5
                                    :movement-speed 30
                                    :rotation-speed 200
                                    :attack-speed 2
-                                   :strength 25
-                                   :camera (main-camera)}))
+                                   :strength 25}))
 
   (def enemy-hero (create-enemy-hero {:name "Enemy Hero"
+                                      :x 5
+                                      :z 5
                                       :movement-speed 15
                                       :rotation-speed 150
                                       :attack-speed 4

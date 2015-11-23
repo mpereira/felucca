@@ -49,3 +49,4 @@
 ;; System.NullReferenceException: Object reference not set to an instance of an
 ;; object
 (def Component RTSCamera)
+(defn component [that] (.GetComponent that Component))
