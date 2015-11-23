@@ -1,6 +1,8 @@
 (ns src.battle-arena.vector3
   (:import [UnityEngine Vector3]))
 
+(defn v3->vector [^Vector3 v3] [(.x v3) (.y v3) (.z v3)])
+
 (defn v*scalar ^Vector3 [^Vector3 v s] (Vector3/op_Multiply v (float s)))
 
 (defn v*v ^Vector3 [^Vector3 v1 ^Vector3 v2] (Vector3/Scale v1 v2))

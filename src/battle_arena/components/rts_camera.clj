@@ -43,3 +43,9 @@
 
 (defcomponent RTSCamera [^float speed ^float border]
   (Update [this] (update! this)))
+
+;; FIXME: trying to `import` types provided by `defcomponent` result in:
+;;
+;; System.NullReferenceException: Object reference not set to an instance of an
+;; object
+(def Component RTSCamera)
