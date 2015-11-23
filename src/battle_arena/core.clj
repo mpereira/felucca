@@ -32,7 +32,8 @@
             Vector3
             WaitForSeconds]))
 
-(defn create-hero [{:keys [x z name strength attack-speed]}]
+(defn create-hero [{:keys [x z name strength attack-speed attack-range
+                           movement-speed rotation-speed]}]
   (let [hero (create-primitive :cube)]
     (h/populate!
       hero
@@ -42,25 +43,25 @@
                     :local-scale [1 2 1]}]
        :character-controller [{:radius 0.5}]})
     (.AddComponent hero hero/Component)
-    (set! (.. hero (GetComponent hero/Component) strength) strength)
-    (set! (.. hero (GetComponent hero/Component) attack-speed) attack-speed)
+    (set! (.strength (hero/component hero)) strength)
+    (set! (.attack-speed (hero/component hero)) (float attack-speed))
+    (set! (.attack-range (hero/component hero)) (float attack-range))
+    (set! (.movement-speed (hero/component hero)) (float movement-speed))
+    (set! (.rotation-speed (hero/component hero)) (float rotation-speed))
     hero))
 
-(defn create-enemy-hero [{:keys [aggressiveness-radius] :as attributes}]
+(defn create-enemy-hero [{:keys [aggressiveness-radius player-hero]
+                          :as attributes}]
   (let [enemy-hero (create-hero attributes)]
     (.AddComponent enemy-hero enemy/Component)
-    (set! (.. enemy-hero (GetComponent enemy/Component) player-hero) player-hero)
-    (set! (.. enemy-hero (GetComponent enemy/Component) aggressiveness-radius)
+    (set! (.player-hero (enemy/component enemy-hero)) player-hero)
+    (set! (.aggressiveness-radius (enemy/component enemy-hero))
           aggressiveness-radius)
     enemy-hero))
 
-(defn create-player [{:keys [movement-speed rotation-speed] :as attributes}]
+(defn create-player [attributes]
   (let [player (create-hero attributes)]
     (.AddComponent player player-input/Component)
-    (set! (.. player (GetComponent hero/Component) movement-speed)
-          movement-speed)
-    (set! (.. player (GetComponent hero/Component) rotation-speed)
-          rotation-speed)
     player))
 
 (defn create-terrain []
@@ -87,18 +88,20 @@
   (def player-hero (create-player {:name "Player Hero"
                                    :x -5
                                    :z -5
-                                   :movement-speed 30
-                                   :rotation-speed 200
+                                   :strength 25
                                    :attack-speed 2
-                                   :strength 25}))
+                                   :attack-range 1.2
+                                   :movement-speed 30
+                                   :rotation-speed 200}))
 
   (def enemy-hero (create-enemy-hero {:name "Enemy Hero"
                                       :x 5
                                       :z 5
+                                      :strength 15
+                                      :attack-speed 4
+                                      :attack-range 1.2
                                       :movement-speed 15
                                       :rotation-speed 150
-                                      :attack-speed 4
-                                      :strength 15
                                       :player-hero player-hero
                                       :aggressiveness-radius 10}))
 
@@ -125,18 +128,16 @@
   (h/populate! (main-camera) {:orthographic true
                               :orthographic-size 10
                               :background-color Color/clear})
-
-  (add-component (.. (main-camera) gameObject) rts-camera/Component)
-  (set! (.. (main-camera) (GetComponent rts-camera/Component) speed) (float 10))
-  (set! (.. (main-camera) (GetComponent rts-camera/Component) border) (float 100)))
+  (add-component (.. Camera main gameObject) rts-camera/Component)
+  (set! (.speed (rts-camera/component Camera/main)) (float 10))
+  (set! (.border (rts-camera/component Camera/main)) (float 100)))
 
 (defn stop []
   (dorun (map destroy (objects-named "Enemy Hero")))
   (dorun (map destroy (objects-named "Player Hero")))
   (dorun (map destroy (objects-named "Light")))
   (dorun (map destroy (objects-named "Terrain")))
-  (doseq [rts-camera (.. (main-camera) (GetComponents rts-camera/Component))]
-    (destroy rts-camera)))
+  (destroy (rts-camera/component Camera/main)))
 
 (defn reset []
   (stop)

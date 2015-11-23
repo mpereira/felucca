@@ -7,6 +7,7 @@
 (defn strength [this] (.strength this))
 (defn hit-points [this] (.hit-points this))
 (defn attack-speed [this] (.attack-speed this))
+(defn attack-range [this] (.attack-range this))
 (defn movement-speed [this] (.movement-speed this))
 (defn rotation-speed [this] (.rotation-speed this))
 
@@ -64,9 +65,10 @@
                          (.hit-points-bar-texture this)
                          (ScaleMode/StretchToFill)))))
 
-(defcomponent Hero [^float strength
+(defcomponent Hero [^int strength
                     ^float hit-points
                     ^float attack-speed
+                    ^float attack-range
                     ^float movement-speed
                     ^float rotation-speed
                     ^Texture2D hit-points-bar-texture-background

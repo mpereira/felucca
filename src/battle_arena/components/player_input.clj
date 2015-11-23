@@ -26,6 +26,11 @@
       (> (- Time/time (last-hit-attempted-at this))
          (hero/attack-speed (hero/component this)))))
 
+(defn within-attack-range? [this creature]
+  (> (hero/attack-range (hero/component this))
+     (vdistance (.. this transform localPosition)
+                (.. creature transform localPosition))))
+
 (defn hit! [this creature]
   (set! (.last-hit-attempted-at this) Time/time)
   (hero/receive-hit! (hero/component creature) 5))
@@ -83,7 +88,7 @@
     (let [attackee-position (.. this attackee transform localPosition)]
       (look-towards-position! this attackee-position)
       (move-towards-position! this attackee-position)
-      (when (> 1.2 (vdistance (.. this transform localPosition) attackee-position))
+      (when (within-attack-range? this (attackee this))
         (attempt-hit! this (attackee this))))))
 
 (defcomponent PlayerInput [^bool moving-towards-target?
