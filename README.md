@@ -1,6 +1,6 @@
 # Battle Arena
 
-![Battle Arena gameplay](https://dl.dropboxusercontent.com/u/14256545/battle_arena_20150125.gif)
+![Battle Arena gameplay](https://www.dropbox.com/s/cnowxhgtf55rzdx/battle-arena-0.gif?raw=1)
 
 # Dependencies
 
