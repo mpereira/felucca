@@ -12,7 +12,7 @@
 
 (defn update! [game-object role-key]
   (let [enemy (state game-object :enemy)]
-    (when-not (hero/dead? (:player-hero enemy))
+    (when-not (hero/dead? game-object)
       (look-at-player-hero! game-object))))
 
 (defmutable Enemy [^GameObject player-hero
