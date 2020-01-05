@@ -1,7 +1,6 @@
-(ns src.battle-arena.utils
+(ns battle-arena.utils
   (:use arcadia.core)
-  (:require [src.battle-arena.vector3 :refer :all]
-            [src.battle-arena.components.hero :as hero])
+  (:require [battle-arena.vector3 :refer :all])
   (:import IEnumerator
            Timeline
            [UnityEngine
@@ -12,6 +11,7 @@
             KeyCode
             Mathf
             Physics
+            Renderer
             Ray
             RaycastHit
             Time]))
@@ -27,7 +27,9 @@
 
 (defn main-camera [] (UnityEngine.Camera/main))
 
-(defn height [object] (.. object renderer bounds size y))
+(defn height [object]
+  (with-cmpt object [r Renderer]
+    (.. r bounds size y)))
 
 (defmulti terrain? class)
 

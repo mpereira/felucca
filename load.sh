@@ -1,13 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# shellcheck disable=SC2039
 
-PROGRAM="$(cat \
-  src/battle_arena/vector3.clj \
-  src/battle_arena/components/hero.clj \
-  src/battle_arena/components/enemy.clj \
-  src/battle_arena/components/player_input.clj \
-  src/battle_arena/components/rts_camera.clj \
-  src/battle_arena/utils.clj \
-  src/battle_arena/core.clj \
-)"
+readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+readonly project_directory="$(readlink -f "${script_directory}")"
 
-ruby Assets/Arcadia/Editor/repl-client.rb <<< "$PROGRAM"
+declare -a files
+mapfile -t files < <(find "${project_directory}/src" -type f)
+
+
+for file in "${files[@]}"; do
+  echo "loading '${file}'"
+  ruby "${project_directory}/Assets/Arcadia/Editor/repl-client.rb" <<< "$(cat "${file}")"
+done
