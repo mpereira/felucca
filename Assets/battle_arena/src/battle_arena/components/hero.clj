@@ -58,10 +58,10 @@
   (decrement-hit-points! game-object hit))
 
 (defn awake! [game-object role-key]
-  (log "hero awake!"))
+  (log "hero awake!" (.name game-object)))
 
 (defn start! [game-object role-key]
-  (log "hero start!")
+  (log "hero start!" (.name game-object))
   (update-state game-object
                 :hero
                 (fn [{:keys [hit-points] :as hero}]
