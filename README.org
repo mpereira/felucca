@@ -47,8 +47,13 @@
 
    My workflow looks like the following:
 
-   1. Run ~miracle~ and select =arcadia:localhost:3722=
-   2.
+   1. Press the "Play" button in Unity to start the game
+   2. Run ~M-x miracle~ in Emacs and select =arcadia:localhost:3722=
+   3. Evaluate files with ~miracle-load-file~
+   4. Evaluate forms by changing to their namespaces with
+      ~miracle-eval-namespace~ or ~(in-ns 'some.namespace)~ and then calling
+      ~miracle-eval-defun~ or ~miracle-eval-expression-at-point~
+   5. Evaluate buffers with ~miracle-eval-buffer~ or ~miracle-load-file~
 
    As of [2019-12-30 Mon] connecting to the nREPL using [[https://github.com/clojure-emacs/cider][Cider]] doesn't work for
    me. I get error messages like the one below:

@@ -58,21 +58,10 @@
   (decrement-hit-points! game-object hit))
 
 (defn awake! [game-object role-key]
-  (update-state game-object
-                :hero
-                (fn [hero]
-                  (assoc hero
-                         :hit-points-bar-texture
-                         (Texture2D. 1 1 (TextureFormat/RGB24) false)
-                         :hit-points-bar-texture-background
-                         (Texture2D. 1 1 (TextureFormat/RGB24) false))))
-  (let [hero (state game-object :hero)]
-    (.SetPixel (:hit-points-bar-texture-background hero) 0 0 (Color/black))
-    (.Apply (:hit-points-bar-texture-background hero))
-    (.SetPixel (:hit-points-bar-texture hero) 0 0 (Color/red))
-    (.Apply (:hit-points-bar-texture hero))))
+  (log "hero awake!"))
 
 (defn start! [game-object role-key]
+  (log "hero start!")
   (update-state game-object
                 :hero
                 (fn [{:keys [hit-points] :as hero}]
