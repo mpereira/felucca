@@ -31,22 +31,9 @@
   (with-cmpt object [r Renderer]
     (.. r bounds size y)))
 
-(defmulti terrain? class)
-
-(defmethod terrain? RaycastHit [raycast-hit]
-  (= "Terrain" (.. raycast-hit transform gameObject name)))
-
-(defmulti enemy-hero? class)
-
-(defmethod enemy-hero? RaycastHit [raycast-hit]
-  (= "Enemy Hero" (.. raycast-hit transform gameObject name)))
-
-(defn target-hit []
-  (let [ray (.ScreenPointToRay Camera/main Input/mousePosition)
-        hits (->seq (Physics/RaycastAll ray
-                                        Mathf/Infinity
-                                        Physics/DefaultRaycastLayers))]
-    (last hits)))
+(defn install-hooks [game-object role-key hooks]
+  (doseq [[hook hook-fn] hooks]
+    (hook+ game-object hook role-key hook-fn)))
 
 (defn after [seconds f]
   (let [waited? (atom false)

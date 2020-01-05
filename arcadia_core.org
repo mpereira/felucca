@@ -1,0 +1,703 @@
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L38][=log=]]
+** Syntax
+   =(log & args)=
+** Description
+   Log message to the Unity console. Arguments are combined into a string. See
+   Also: [[https://docs.unity3d.com/Manual/Console.html][Unity Console]]
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L48][=null->nil=]]
+** Syntax
+   =(null->nil x)=
+** Description
+   Same as =identity=, except if =x= is a null =UnityEngine.Object=, will return
+   =nil=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L56][=null?=]]
+** Syntax
+   =(null? x)=
+** Description
+   Should =x= be considered =nil=? =(null? x)= will evalute to =true= if =x= is
+   in fact =nil=, or if =x= is a =UnityEngine.Object= instance such that
+   =(UnityEngine.Object/op_Equality x nil)= returns =true=. Otherwise will
+   return =false=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L71][=instantiate=]]
+** Syntax
+   =(instantiate original)= =(instantiate original position)= =(instantiate
+   original position rotation)=
+** Description
+   Clones the original object and returns the clone. The clone can optionally be
+   given a new position or rotation as well.
+
+   Wraps [[https://docs.unity3d.com/ScriptReference/Object.Instantiate.html][=Object/Instantiate=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L90][=create-primitive=]]
+** Syntax
+   =(create-primitive prim)= =(create-primitive prim name)= #### Description
+   Creates a game object with a primitive mesh renderer and appropriate
+   collider. =prim= can be a [[https://docs.unity3d.com/ScriptReference/PrimitiveType.html][=PrimitiveType=]] or one of =:sphere= =:capsule=
+   =:cylinder= =:cube= =:plane= =:quad=. If supplied, the third argument should
+   be a string, and will be set as the name of the newly created GameObject.
+   Wraps [[https://docs.unity3d.com/ScriptReference/GameObject.CreatePrimitive.html][=GameObject/CreatePrimitive=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L112][=destroy=]]
+** Syntax
+   =(destroy obj)= =(destroy obj t)=
+** Description
+   Removes a GameObject, component or asset. When called with =t=, the removal
+   happens after =t= seconds. Wraps [[https://docs.unity3d.com/ScriptReference/Object.Destroy.html][=Object/Destroy=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L120][=destroy-immediate=]]
+** Syntax
+   =(destroy-immediate obj)=
+** Description
+   Removes a GameObject, component or asset immediately. Wraps
+   [[https://docs.unity3d.com/ScriptReference/Object.DestroyImmediate.html][=Object/DestroyImmediate=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L126][=retire=]]
+** Syntax
+   =(retire obj)=
+** Description
+   If in Play mode, calls [[https://docs.unity3d.com/ScriptReference/Object.Destroy.html][=Object/Destroy=]], otherwise calls
+   [[https://docs.unity3d.com/ScriptReference/Object.DestroyImmediate.html][=Object/DestroyImmediate=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L133][=object-typed=]]
+** Syntax
+   =(object-typed t)=
+** Description
+   Returns one live instance of UnityEngine.Object subclass type =t= from the
+   scene graph, or =nil= if no such object can be found. Wraps
+   [[https://docs.unity3d.com/ScriptReference/Object.FindObjectOfType.html][=Object/FindObjectOfType=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L140][=objects-typed=]]
+** Syntax
+   =(objects-typed t)=
+** Description
+   Returns a sequence of all live instances of UnityEngine.Object subclass type
+   =t= in the scene graph. Wraps [[https://docs.unity3d.com/ScriptReference/Object.FindObjectsOfType.html][=Object/FindObjectsOfType=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L146][=object-named=]]
+** Syntax
+   =(object-named name-or-regex)=
+** Description
+   Returns one live GameObject from the scene graph, the name of which matches
+   =name-or-regex=. =name-or-regex= may be a string or a regular expression
+   object.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L172][=objects-named=]]
+** Syntax
+   =(objects-named name-or-regex)=
+** Description
+   Returns a sequence of all live [[https://docs.unity3d.com/ScriptReference/GameObject.html][=GameObject=]]s in the scene graph, the name of
+   which match =name-or-regex=. =name-or-regex= may be a string or a regular
+   expression object.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L195][=object-tagged=]]
+** Syntax
+   =(object-tagged t)=
+** Description
+   Returns one live [[https://docs.unity3d.com/ScriptReference/GameObject.html][=GameObject=]] tagged =t= from the scene graph, or =nil= if no
+   such GameObjects exist.
+
+   Wraps [[https://docs.unity3d.com/ScriptReference/GameObject.FindWithTag.html][=GameObject/FindWithTag=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L203][=objects-tagged=]]
+** Syntax
+   =(objects-tagged t)=
+** Description
+   Returns a sequence of live [[https://docs.unity3d.com/ScriptReference/GameObject.html][=GameObject=]]s tagged tag. Returns empty array if
+   no [[https://docs.unity3d.com/ScriptReference/GameObject.html][=GameObject=]] was found. Wraps [[https://docs.unity3d.com/ScriptReference/GameObject.FindGameObjectsWithTag.html][=GameObject/FindGameObjectsWithTag=]].
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L229][=gobj=]]
+** Syntax
+   =(gobj x)=
+** Description
+   Coerces =x=, expected to be a GameObject or Component, to a corresponding
+   live (non-destroyed) GameObject instance or to =nil= by the following policy:
+
+   - If =x= is a live GameObject, returns it.
+   - If =x= is a destroyed GameObject, returns =nil=.
+   - If =x= is a live Component, returns its containing GameObject.
+   - If =x= is a destroyed Component, returns =nil=.
+   - If =x= is =nil=, returns =nil=.
+   - Otherwise throws an ArgumentException.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L266][=child+=]]
+** Syntax
+   =(child+ x child)= =(child+ x child world-position-stays)= #### Description
+   Makes GameObject =x= the new parent of GameObject =child=. Returns =child=.
+
+   If =world-position-stays= is true, =child= retains its world position after
+   being reparented.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L282][=child-=]]
+** Syntax
+   =(child- x child)= =(child- x child world-position-stays)= #### Description
+   Removes GameObject =x= as the parent of GameObject =child=, moving =child= to
+   the top of the scene graph hierarchy. Returns =nil=.
+
+   If =world-position-stays= is =true=, =child= retains its world position after
+   being reparented.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L296][=children=]]
+** Syntax
+   =(children x)=
+** Description
+   Gets the live children of GameObject =x= as a persistent vector of
+   GameObjects.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L310][=parent=]]
+** Syntax
+   =(parent x)=
+** Description
+   Returns the live parent of GameObject =x= or =nil= if it has none.
+
+   GameObjects at the top of the hierarchy do not have parents.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L327][=cmpt=]]
+** Syntax
+   =(cmpt x t)=
+** Description
+   Returns the first live Component of type =t= attached to GameObject =x=.
+   Returns =nil= if no such Component is attached.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L333][=cmpts=]]
+** Syntax
+   =(cmpts x t)=
+** Description
+   Returns all live Components of type =t= attached to GameObject =x= as a
+   (possibly empty) array.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L339][=cmpt+=]]
+** Syntax
+   =(cmpt+ x t)=
+** Description
+   Adds a new Component of type =t= to GameObject =x=. Returns the new
+   Component.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L346][=cmpt-=]]
+** Syntax
+   =(cmpt- x t)=
+** Description
+   Removes /every/ Component of type =t= from GameObject =x=. Returns =nil=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L358][=ensure-cmpt=]]
+** Syntax
+   =(ensure-cmpt x t)=
+** Description
+   If GameObject =x= has a component of type =t=, returns it. Otherwise, adds a
+   component of type =t= and returns the new instance.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L377][=with-cmpt=]]
+  /macro/
+** Syntax
+   =(with-cmpt gob bindings & body)= #### Description =binding => name
+   component-type=
+
+   For each binding, binds =name= to an instance of class =component-type=
+   attached to GameObject =gob=. If no such instance is currently attached to
+   =x=, a new instance of =component-type= will be created, attached to =x=, and
+   bound to =name=. =body= is then evaluated in the lexical context of all
+   bindings.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L397][=if-cmpt=]]
+  /macro/
+** Syntax
+   =(if-cmpt gob [cmpt-name cmpt-type] then & else)=
+** Description
+   If a component of type =cmpt-type= is attached to GameObject =gob=, binds it
+   to =cmpt-name=, then evaluates and returns =then= in the lexical scope of
+   that binding. Otherwise evaluates and returns =else=, if provided, or returns
+   =nil= if =else= is not provided.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L412][=sets!=]]
+  /macro/
+** Syntax
+   =(sets! o & assignments)=
+** Description
+   Set multiple fields or properties on an object instance =o= simultaneously.
+
+   assignment => field-name value
+
+   For each assignment, field-name is the name of a field or property of =o=,
+   and =value= is the new value it will be set to.
+
+   Returns the final set value.
+
+   #+BEGIN_EXAMPLE
+       (sets! (.transform some-game-object)
+              position (arcadia.linear/v3 1 2 3)
+              localScale (arcadia.linear/v3 1 2 3))
+   #+END_EXAMPLE
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L435][=set-with!=]]
+  /macro/
+** Syntax
+   =(set-with! obj [name prop :as bindings] & body)= #### Description Access and
+   set a field or property =prop= on object instance =obj=. The new value at =(.
+   obj prop)= will be set to the value of =body=, evaluated in an implicit =do=,
+   with =name= bound to the preexisting value of =(. obj prop)=. This operation
+   is not atomic, and should be used with caution in concurrent contexts.
+
+   As an example,
+
+   #+BEGIN_EXAMPLE
+       (set-with! (.transform some-game-object)
+         [pos position]
+         (arcadia.linear/v3+ pos (arcadia.linear/v3 1 0 0)))
+   #+END_EXAMPLE
+
+   is equivalent to
+
+   #+BEGIN_EXAMPLE
+       (let [tr (.transform some-game-object)
+             pos (.position tr)]
+         (set! (.position tr)
+               (arcadia.linear/v3+ (.position tr) (arcadia.linear/v3 1 0 0))))
+   #+END_EXAMPLE
+
+   Since the object is the first argument, multiple such assignments on an
+   object may be chained using =doto=. Returns the new value of the field or
+   property.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L473][=descendents=]]
+** Syntax
+   =(descendents x)=
+** Description
+   Returns a sequence containing all descendents of GameObject =x= in
+   depth-first order. The descendents of =x= are all GameObjects attached as
+   children to =x= in the Unity hierarchy; all of those GameObject's children;
+   and so on.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L495][=available-hooks=]]
+** Syntax
+   =(available-hooks)=
+** Description
+   Returns a sorted seq of all permissible hook event keywords.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L523][=hook+=]]
+** Syntax
+   =(hook+ obj event-kw k f)=
+** Description
+   Attach a Clojure function, preferrably a Var instance, to GameObject =obj= on
+   key =k=. The function =f= will be invoked every time the event identified by
+   =event-kw= is triggered by Unity.
+
+   =f= must be a function of 2 arguments, plus however many arguments the
+   corresponding Unity event function takes. The first argument is the
+   GameObject =obj= that =f= is attached to. The second argument is the key =k=
+   it was attached with. The remaining arguments are the arguments normally
+   passed to the corresponding Unity event function.
+
+   Returns =f=. #### See Also * [[https://docs.unity3d.com/Manual/EventFunctions.html][Unity Event Functions]]
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L543][=hook-=]]
+** Syntax
+   =(hook- obj event-kw key)=
+** Description
+   Removes hook function from GameObject =obj= on the Unity event corresponding
+   to =event-kw= at =key=, if it exists. Reverse of
+
+   #+BEGIN_EXAMPLE
+         (hook+ obj event-kw key hook-function)
+   #+END_EXAMPLE
+
+   Returns =nil=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L557][=clear-hooks=]]
+** Syntax
+   =(clear-hooks obj event-kw)=
+** Description
+   Removes all hook functions on the Unity event corresponding to =event-kw=,
+   regardless of their keys.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L565][=hook=]]
+** Syntax
+   =(hook obj event-kw key)=
+** Description
+   Retrieves an attached hook function from GameObject =obj=. =event-kw= is a
+   keyword specifying the Unity event of the hook function, and =key= is the key
+   of the hook function.
+
+   In other words, retrieves any hook function attached via
+
+   #+BEGIN_EXAMPLE
+         (hook+ obj event-kw key hook-function)
+   #+END_EXAMPLE
+
+   or the equivalent.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L585][=snapshot=]]
+** Syntax
+   =(snapshot x)=
+** Description
+   Converts =defmutable= instance =x= to a persistent representation.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L591][=maybe-snapshot=]]
+** Syntax
+   =(maybe-snapshot x)=
+** Description
+   Unstable implementation detail, please don't use.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L598][=mutable=]]
+** Syntax
+   =(mutable x)=
+** Description
+   Given a persistent representation of a mutable datatype defined via
+   =defmutable=, constructs and returns a matching instance of that datatype.
+
+   Roundtrips with =snapshot=; that is, for any instance =x= of a type defined
+   via =defmutable=,
+
+   #+BEGIN_EXAMPLE
+       (= (snapshot x) (snapshot (mutable (snapshot x))))
+   #+END_EXAMPLE
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L612][=maybe-mutable=]]
+** Syntax
+   =(maybe-mutable x)=
+** Description
+   Unstable implementation detail, please don't use.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L623][=lookup=]]
+** Syntax
+   =(lookup go k)=
+** Description
+   Returns the state of GameObject =go= at key =k=. Does not convert defmutable
+   instances to persistent representations.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L629][=state=]]
+** Syntax
+   =(state go)= =(state go k)=
+** Description
+   With one argument, returns the state of GameObject =go= on all keys as a map.
+   With two arguments, returns the state of GameObject =go= at key =k=. If this
+   state is a =defmutable= instance, will return a persistent representation
+   instead. To avoid this behavior use =lookup=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L648][=state+=]]
+** Syntax
+   =(state+ go k v)=
+** Description
+   Sets the state of GameObject =go= to value =v= at key =k=. Returns =v=. If
+   =v= is a persistent representation of a =defmutable= instance, will convert
+   it to a mutable instance before inserting in the scene graph.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L658][=state-=]]
+** Syntax
+   =(state- go k)=
+** Description
+   Removes the state of object =go= at key =k=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L665][=clear-state=]]
+** Syntax
+   =(clear-state go)=
+** Description
+   Removes all state from the GameObject =go=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L678][=update-state=]]
+** Syntax
+   =(update-state go k f)= =(update-state go k f x)= =(update-state go k f x y)=
+   =(update-state go k f x y z)= =(update-state go k f x y z & args)=
+** Description
+   Updates the state of GameObject =go= at key =k= with function =f= and
+   additional arguments =args=. Args are applied in the same order as . Returns
+   the new value of the state at =k=.
+
+   In the special case that the value in state is a defmutable instance, =f=
+   will be applied to the persistent representation of that value, which will
+   then be converted to a mutable instance again, and inserted into state at
+   =k=. The returned value will be =f= applied to the persistent representation.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L744][=role-=]]
+** Syntax
+   =(role- obj k)=
+** Description
+   Removes a role from GameObject =obj= on key =k=. Any hook or state attached
+   to =obj= on key =k= will be removed. Returns =nil=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L765][=role+=]]
+** Syntax
+   =(role+ obj k r)=
+** Description
+   Adds a role =r= to GameObject =obj= on key =k=, replacing any previous role
+   on =k=. Keys in =r= corresponding to Unity event functions, such as
+   =:update=, =:on-collision-enter=, etc, are expected to have values meeting
+   the criteria for hook functions described in the docstring for =hook+=. For
+   such a key =event-kw=, values will be attached to =obj= as though by =(hook+
+   obj event-kw k (get r event-kw))=.
+
+   If present, the value of the key =:state= in =r= will be attached to =obj= as
+   though by =(state+ obj k (get r :state))=.
+
+   For example,
+
+   #+BEGIN_EXAMPLE
+       (role+
+       obj,
+       :example-role,
+       {:state 45, {:update #'on-update, :on-collision-enter #'on-collision-enter}})
+   #+END_EXAMPLE
+
+   has the same effect as
+
+   #+BEGIN_EXAMPLE
+       (role- obj :example-role)
+       (state+ obj :example-role 45)
+       (hook+ obj :update :example-role #'on-update)
+       (hook+ obj :on-collision-enter :example-role #'on-collision-enter)
+   #+END_EXAMPLE
+
+   As with =state+=, persistent reprsentations =defmutable= data as values in
+   =:state= will be converted to mutable instances.
+
+   Returns =r=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L813][=roles+=]]
+** Syntax
+   =(roles+ obj rs)=
+** Description
+   Takes a GameObject =obj= and map =rs= containing role keys and role maps as
+   entries. For each entry in =rs= with key =k= and value =r=, adds =r= to =obj=
+   on key =k= as though calling
+
+   #+BEGIN_EXAMPLE
+       (role+ obj k r)
+   #+END_EXAMPLE
+
+   Returns =rs=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L827][=roles-=]]
+** Syntax
+   =(roles- obj ks)=
+** Description
+   Takes a GameObject =obj= and collection of keys =ks=. For each key =k= in
+   =ks=, will remove =k= from =obj=, as if calling
+
+   #+BEGIN_EXAMPLE
+       (role- obj k)
+   #+END_EXAMPLE
+
+   Returns =nil=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L853][=role=]]
+** Syntax
+   =(role obj k)=
+** Description
+   Returns a map of all hooks and state attached to GameObject =obj= on key =k=.
+   Within the returned map, keys will be either hook event keywords such as
+   =:update=, =:on-collision-enter=, etc, or =:state=.
+
+   #+BEGIN_EXAMPLE
+       (hook+ obj :update :test #'on-update)
+       (state+ obj :test {:speed 3, :mass 4})
+
+       (role obj :test)
+       ;; returns:
+       ;; {:state {:speed 3, :mass 4},
+       ;;  :update #'on-update}
+   #+END_EXAMPLE
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L897][=roles=]]
+** Syntax
+   =(roles obj)=
+** Description
+   Returns a map containing all the roles attached to GameObject =obj=. For each
+   entry in this map, the key is the key of some hooks or state attached to
+   =obj=, and the value is the map one would get by calling =(role obj k)= for
+   that key =k=. For example:
+
+   #+BEGIN_EXAMPLE
+       (hook+ obj :update :key-a #'on-update)
+       (state+ obj :key-a {:speed 3, :mass 4})
+
+       (hook+ obj :update :key-b #'other-on-update)
+       (state+ obj :key-b {:name "bob", :health 5})
+
+       (roles obj)
+       ;; returns:
+       ;; {:key-a {:state {:speed 3, :mass 4},
+       ;;          :update #'on-update},
+       ;;  :key-b {:state {:name "bob", :health 5},
+       ;;          :update #'other-on-update}}
+   #+END_EXAMPLE
+
+   Roundtrips with =roles+=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L974][=defrole=]]
+  /macro/
+** Description
+   =(defrole name entry*)=
+
+   Macro for defining roles quickly. Each entry can be either a key-value pair
+   with a keyword key, such as would normally occur in a map intended as an
+   Arcadia role, or an inlined function definition.
+
+   Normal key-value pairs get inserted into the generated map. For example,
+
+   #+BEGIN_EXAMPLE
+       (defrole movement
+         :state {:speed 3}
+         :update #'movement-update)
+   #+END_EXAMPLE
+
+   will expand into
+
+   #+BEGIN_EXAMPLE
+       (def movement
+         {:state {:speed 3}
+          :update #'movement-update})
+   #+END_EXAMPLE
+
+   Inlined function definitions have the following syntax:
+
+   =(name [args*] body)=
+
+   name must be the symbol form of an Arcadia hook keyword. A function intended
+   for the =:update= hook, for example, should have the name =update=:
+
+   #+BEGIN_EXAMPLE
+       (defrole movement
+         :state {:speed 3}
+         (update [obj k] ...))
+   #+END_EXAMPLE
+
+   Each inlined function definition will /generate a var/, with a name
+   constructed as follows: =<name of role>-<name of hook>=
+
+   For example, the =movement= role above will generate a var named
+   =movement-update= bound to a function with the provided arguments and body,
+   and include that var in the generated role map, expanding into something
+   like:
+
+   #+BEGIN_EXAMPLE
+       (do
+         (defn movement-update [obj k] ...)
+         (def movement
+           {:state {:speed 3}
+            :update #'movement-update}))
+   #+END_EXAMPLE
+
+   Note that generating vars is usually a bad idea because it messes with
+   tooling and legibility. This macro does it anyway because the hook functions
+   should serialize in the Unity scene graph, and that requires vars.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L1089][=mut!=]]
+** Syntax
+   =(mut! x kw v)=
+** Description
+   Dynamically sets field keyword =kw= of =defmutable= instance =x= to new value
+   =v=. Returns =v=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L1095][=delete!=]]
+** Syntax
+   =(delete! x k)=
+** Description
+   Removes dynamic entry =k= from =defmutable= instance =x=.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L1216][=defmutable=]]
+  /macro/
+** Description
+   =(defmutable [name [fields*] other*])=
+
+   Defines a new serializable, type-hinted, mutable datatype, intended for
+   particularly performance or allocation sensitive operations on a single
+   thread (such as Unity's main game thread). These datatypes support
+   snapshotting to persistent data via =snapshot=, and reconstruction from
+   snapshots via =mutable=; snapshotting and reconstructing are also integrated
+   into =state=, =state+=, =update-state=, =role=, =role+=, and =roles=.
+
+   =defmutable= instances may be mutated in two ways. Their fields may be
+   mutated directly using =set!= and dot syntax. Fields may also be dynamically
+   set using =(mut! obj k v)=. Here, =obj= is the =defmutable= instance, =k= is
+   the keyword key for an entry, and =v= is the new value of that entry to set
+   on the defmutable instance.
+
+   Instances of these types may be converted into persistent representations and
+   back via =snapshot= and =mutable=. This roundtrips, so if =x= is such an
+   instance:
+
+   #+BEGIN_EXAMPLE
+       (= (snapshot x) (snapshot (mutable (snapshot x))))
+   #+END_EXAMPLE
+
+   If a persistent snapshot is specified as the state argument of =set-state=,
+   or as the =:state= value in the map argument of =role+=, the =ArcadiaState=
+   component will be populated at the appropriate key by the result of calling
+   =mutable= on that snapshot. Conversely, =role= and =roles= will automatically
+   convert any mutable instances that would otherwise be the values of =:state=
+   in the returned map(s) to persistent snapshots.
+
+   =defmutable= supports four special options to help define custom =snapshot=
+   and =mutable= implementations:
+
+   - =:snapshot=
+   - =:mutable=
+   - =:snapshot-elements=
+   - =:mutable-elements=
+
+   =:snapshot= and =:mutable= expect their values to be in the following form:
+
+   =([this-param key-param value-param] body*)=
+
+   When calling =snapshot= or =mutable=, the function defined by =:snapshot= or
+   =:mutable= will be called on each entry in the =defmutable= instance (in the
+   case of =snapshot=) or the persistent map representation (in the case of
+   =mutable=). When these functions run, =this-param= will be assigned to the
+   original =defmutable= instance for =snapshot=, or to the original persistent
+   map representation for =mutable=; =key-param= will be assigned to the keyword
+   key of this entry; and =val-param= will be assigned to its incoming value.
+   For =:snapshot=, the return will be the value of the corresponding entry in
+   the persistent map representation. For =:mutable=, the return will be the
+   value of the corresponding entry in the =defmutable= instance representation.
+   =:snapshot= and =:mutable= should invert each other.
+
+   =:snapshot-elements= and =:mutable-elements= support finer specialization of
+   =snapshot= and =mutable= behavior. They expect their values to be maps from
+   keyword names of possible entries, to the same sort of function
+   specifications taken by =:snapshot= and =:mutable=. Specifications made with
+   =:snapshot-elements= or =:mutable-elements= take priority over those made
+   with =:snapshot= or =:mutable=.
+
+   See the online documentation for examples.
+
+   =defmutable= will automatically generate a constructor function. As with
+   =deftype=, the name of its var will be =->= followed by the name of the type,
+   and its expected arguments will be the initial values of =fields=, in order.
+
+   For example, given the following =defmutable= definition:
+
+   #+BEGIN_EXAMPLE
+       (defmutable Sheep [wooliness bouyancy])
+   #+END_EXAMPLE
+
+   an instance of =Sheep= could be constructed using
+
+   #+BEGIN_EXAMPLE
+       (->Sheep 3 4)
+   #+END_EXAMPLE
+
+   =defmutable= serialization, via either =snapshot= or Unity scene-graph
+   serialization, does /not/ currently preserve reference identity. Calling
+   =mutable= on the same snapshot twice will result in two distinct instances.
+   It is therefore important to store any given =defmutable= instance in just
+   one place in the scene graph.
+
+   Since they define new types, reevaluating =defmutable= forms will require
+   also reevaluating all forms that refer to them via type hints (otherwise
+   they'll fall back to dynamic lookups). =defmutable-once= is like
+   =defmutable=, but will not redefine the type if it has already been defined
+   (similar to =defonce=).
+
+   As low-level, potentially non-boxing constructs, instances of =defmutable=
+   types work particularly well with the =magic= library.
+
+* [[https://github.com/arcadia-unity/Arcadia/blob/master/Source/arcadia/core.clj#L1530][=defmutable-once=]]
+  /macro/
+** Syntax
+   =(defmutable-once & [name :as args])=
+** Description
+   Like =defmutable=, but will only evaluate if no type with the same name has
+   been defined.
+
+   --------------

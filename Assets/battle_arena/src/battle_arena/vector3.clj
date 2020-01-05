@@ -26,4 +26,11 @@
 
 (defn vdistance ^Vector3 [^Vector3 a ^Vector3 b] (.magnitude (v- a b)))
 
+(defn vempty ^Vector3 []
+  Vector3/negativeInfinity)
+
+(defn vempty? [^Vector3 v]
+  (or (= v Vector3/negativeInfinity)
+      (= v Vector3/positiveInfinity)))
+
 (defn v3 ^Vector3 [x y z] (Vector3. (float x) (float y) (float z)))
