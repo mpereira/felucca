@@ -60,20 +60,16 @@
         creature-material (Material. (Shader/Find "Specular"))
         _ (set! (.color creature-material) color)
         creature (create-primitive :cube creature-name)]
-    (log "before renderer")
     (with-cmpt creature [r Renderer]
       (set! (.material r) creature-material))
-    (log "before transform")
     (with-cmpt creature [t Transform]
       (set! (.localPosition t) position)
       (set! (.localRotation t) (Quaternion/Euler 0 0 0))
       (set! (.localScale t) scale))
-    (log "before charactercontroller")
     (with-cmpt creature [cc CharacterController]
       (set! (. cc radius) 0.5))
     (utils/install-hooks creature :creature creature/hooks)
     (state+ creature :creature creature-state)
-    (log "before hit-points-bar")
     (utils/install-hooks creature :hit-points-bar hit-points-bar/hooks)
     (state+ creature :hit-points-bar hit-points-bar-state)
     creature))
