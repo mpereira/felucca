@@ -83,8 +83,7 @@
 
 (defn normalized-rotation-speed [^GameObject this]
   (* 10
-     (rotation-speed this)
-     Time/deltaTime))
+     (rotation-speed this)))
 
 (defn max-hit-points [^GameObject this] (strength this))
 
@@ -169,35 +168,26 @@
 
 (defn attempt-hit! [^GameObject this
                     ^GameObject attackee]
-  (when (and (alive? this)
-             (alive? attackee)
-             (recovered-from-previous-hit? this))
+  (when (recovered-from-previous-hit? this)
     (hit! this attackee)))
-
-(defn look-at-creature! [^GameObject this
-                         ^GameObject target-creature]
-  (let [target-creature-state (state target-creature :creature)]
-    (.. this
-        transform
-        (LookAt (.. target-creature transform position)))))
 
 (defn look-towards-position! [^GameObject this
                               ^Vector3 position]
   (let [current-position (.. this transform localPosition)]
-    (if (> (v3/vdistance current-position position) 1)
-      (let [current-rotation (.. this transform localRotation)
-            target-rotation  (Quaternion/LookRotation
-                              (v3/v* (v3/v3 1 0 1)
-                                     (v3/v- position current-position)))]
-        (set! (.. this transform localRotation)
-              (Quaternion/RotateTowards current-rotation
-                                        target-rotation
-                                        (normalized-rotation-speed this)))))))
+    (let [current-rotation (.. this transform localRotation)
+          target-rotation  (Quaternion/LookRotation
+                            (v3/v* (v3/v3 1 0 1)
+                                   (v3/v- position current-position)))]
+      (set! (.. this transform localRotation)
+            (Quaternion/RotateTowards current-rotation
+                                      target-rotation
+                                      (* (normalized-rotation-speed this)
+                                         Time/deltaTime))))))
 
 (defn move-towards-position! [^GameObject this
                               ^Vector3 position]
   (let [current-position (.. this transform localPosition)
-        controller       (.. this (GetComponent CharacterController))]
+        controller (.. this (GetComponent CharacterController))]
     (if (> (v3/vdistance current-position position) 1)
       (.SimpleMove controller (v3/v* (.. this transform forward)
                                      (normalized-movement-speed this))))))
