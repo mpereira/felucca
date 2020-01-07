@@ -1,7 +1,7 @@
-(ns battle-arena.components.hit-points-bar
+(ns felucca.components.hit-points-bar
   (:require [arcadia.core :refer [defmutable log update-state state log with-cmpt]]
-            [battle-arena.vector3 :as v3]
-            [battle-arena.components.creature :as creature])
+            [felucca.vector3 :as v3]
+            [felucca.components.creature :as creature])
   (:import [UnityEngine Debug Color Camera GUI Rect Screen Vector3 Texture2D
             Renderer ScaleMode TextureFormat]))
 

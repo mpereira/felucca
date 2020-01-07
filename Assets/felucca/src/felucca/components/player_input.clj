@@ -1,8 +1,8 @@
-(ns battle-arena.components.player-input
+(ns felucca.components.player-input
   (:use arcadia.core)
-  (:require [battle-arena.vector3 :as v3]
-            [battle-arena.utils :as utils]
-            [battle-arena.components.creature :as creature])
+  (:require [felucca.vector3 :as v3]
+            [felucca.utils :as utils]
+            [felucca.components.creature :as creature])
   (:import [UnityEngine
             Application
             Camera

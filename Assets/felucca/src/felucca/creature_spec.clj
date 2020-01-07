@@ -1,6 +1,6 @@
-(ns battle-arena.creature-spec
-  (:require [battle-arena.components.creature :as creature]
-            [battle-arena.vector3 :as v3]))
+(ns felucca.creature-spec
+  (:require [felucca.components.creature :as creature]
+            [felucca.vector3 :as v3]))
 
 (defn range->attribute [[min* max*]]
   (+ min* (rand-int (+ 1 (- max* min*)))))

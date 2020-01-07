@@ -1,4 +1,4 @@
-(ns battle-arena.components.rts-camera
+(ns felucca.components.rts-camera
   (:use arcadia.core)
   (:import [UnityEngine
             Debug

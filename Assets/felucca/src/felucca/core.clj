@@ -1,16 +1,16 @@
-(ns battle-arena.core
+(ns felucca.core
   (:use arcadia.core)
   (:require [arcadia.introspection :as introspection]
             [clojure.pprint :refer [pprint]]
             [clojure.tools.namespace.repl :as repl]
-            [battle-arena.vector3 :as v3]
-            [battle-arena.utils :as utils]
-            [battle-arena.components.creature :as creature]
-            [battle-arena.components.hit-points-bar :as hit-points-bar]
-            [battle-arena.creature-spec :as creature-spec]
-            [battle-arena.creature-specs :as creature-specs]
-            [battle-arena.components.rts-camera :as rts-camera]
-            [battle-arena.components.player-input :as player-input])
+            [felucca.vector3 :as v3]
+            [felucca.utils :as utils]
+            [felucca.components.creature :as creature]
+            [felucca.components.hit-points-bar :as hit-points-bar]
+            [felucca.creature-spec :as creature-spec]
+            [felucca.creature-specs :as creature-specs]
+            [felucca.components.rts-camera :as rts-camera]
+            [felucca.components.player-input :as player-input])
   (:import (UnityEngine
             Application
             Camera
@@ -161,7 +161,7 @@
   (start))
 
 (comment
-  (in-ns 'battle-arena.core)
+  (in-ns 'felucca.core)
 
   (reset)
 

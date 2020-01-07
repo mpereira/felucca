@@ -1,5 +1,5 @@
-(ns battle-arena.creature-specs
-  (:require [battle-arena.vector3 :as v3])
+(ns felucca.creature-specs
+  (:require [felucca.vector3 :as v3])
   (:import (UnityEngine Color)))
 
 (def rat

@@ -1,6 +1,6 @@
-(ns battle-arena.components.creature
+(ns felucca.components.creature
   (:require [arcadia.core :refer [defmutable log update-state state log]]
-            [battle-arena.vector3 :as v3])
+            [felucca.vector3 :as v3])
   (:import [UnityEngine
             Application
             Camera

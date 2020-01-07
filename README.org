@@ -1,99 +1,90 @@
-#+TITLE: Battle Arena
+#+TITLE: Felucca
 #+AUTHOR: Murilo Pereira <murilo@murilopereira.com>
 
-![Battle Arena gameplay](https://www.dropbox.com/s/cnowxhgtf55rzdx/battle-arena-0.gif?raw=1)
+A game inspired by [[https://en.wikipedia.org/wiki/Ultima_Online][Ultima Online]]. Currently in the the early phases of
+development. Made with [[https://clojure.org/][Clojure]] and [[https://unity.com/][Unity]] through [[http://arcadia-unity.github.io/][Arcadia]].
+
+![Felucca gameplay](https://www.dropbox.com/s/cnowxhgtf55rzdx/felucca-0.gif?raw=1)
 
 * Dependencies
+  - Unity (last tested with =2019.2.17f1=)
+  - git
 
-- git
-- Unity (last tested with =2019.2.17f1=)
+* Set up the environment
+  These steps only need to be done once.
 
-* Setting up the environment
-** Download Battle Arena
+** Download the Felucca source code
    #+begin_src bash
-   git clone git@github.com:mpereira/battle-arena.git
+   git clone git@github.com:mpereira/felucca.git
    #+end_src
 
 ** Set up the Unity project
    1. Open the Unity Hub
    2. Click =Add=
    3. Select the directory for the git repository root
-   4. In the =Unity Version= cell for the project just added, select
-      =2019.2.17f1=
-   5. Click on the project row, the Unity project will load and open
-   6. Go to =Edit > Project Settings > Player=
-   7. Make sure that =Resolution and Presentation > Run In Background*= is
+   4. Click on the project row, the Unity project will load and open
+   5. Go to =Edit > Project Settings > Player=
+   6. Make sure that =Resolution and Presentation > Run In Background*= is
       checked
-   8. Make sure that =Other Settings > Configuration > Scripting Backend= is
+   7. Make sure that =Other Settings > Configuration > Scripting Backend= is
       =Mono=
-   9. Make sure that =Other Settings > Configuration > Api Compatibility Level=
+   8. Make sure that =Other Settings > Configuration > Api Compatibility Level=
       is =.NET 4.0=
 
 ** Set up Arcadia
-   Arcadia is a git submodule in battle-arena.
+   Arcadia is a git submodule in Felucca.
 
    #+begin_src bash
    git submodule init
-   git submodule sync
    git submodule update
    #+end_src
 
-  Now you should see =Arcadia Started!= in the Unity Console. Unity is ready to
-  run some Clojure!
+   Now you should see =Arcadia Started!= in the Unity Console. Unity is ready to
+   run some Clojure!
 
-** Connect to the nREPL
-   I'm currently using Emacs with the [[https://github.com/Saikyun/miracle][Miracle]] package for development, following
-   mostly the instructions in the [[https://github.com/arcadia-unity/Arcadia/wiki/REPL#miracle-via-nrepl][Arcadia wiki]].
+* Connect to the nREPL
+  I'm currently using Emacs with the [[https://github.com/Saikyun/miracle][Miracle]] package for development, following
+  mostly the instructions in the [[https://github.com/arcadia-unity/Arcadia/wiki/REPL#miracle-via-nrepl][Arcadia wiki]].
 
-   My workflow looks like the following:
+  My workflow looks like the following:
 
-   1. Press the "Play" button in Unity to start the game
-   2. Run ~M-x miracle~ in Emacs and select =arcadia:localhost:3722=
-   3. Evaluate files with ~miracle-load-file~
-   4. Evaluate forms by changing to their namespaces with
-      ~miracle-eval-namespace~ or ~(in-ns 'some.namespace)~ and then calling
-      ~miracle-eval-defun~ or ~miracle-eval-expression-at-point~
-   5. Evaluate buffers with ~miracle-eval-buffer~ or ~miracle-load-file~
+  1. Press the "Play" button in Unity to start the game
+  2. Run ~M-x miracle~ in Emacs and select =arcadia:localhost:3722=
+  3. Evaluate files with ~miracle-load-file~
+  4. Evaluate forms by changing to their namespaces with
+     ~miracle-eval-namespace~ and then calling ~miracle-eval-defun~ or
+     ~miracle-eval-expression-at-point~
+  5. Evaluate buffers with ~miracle-eval-buffer~ or ~miracle-load-file~
 
-   As of [2019-12-30 Mon] connecting to the nREPL using [[https://github.com/clojure-emacs/cider][Cider]] doesn't work for
-   me. I get error messages like the one below:
+  I have some helpers for developing Felucca in my [[https://github.com/mpereira/.emacs.d#miracle][Emacs configuration]].
 
-   #+begin_src text
-   MissingMethodException: Cannot find member split matching args
-   (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
-   (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
-   user$eval__6884__6889.__interop_split6891 (System.Object , System.Object __temp_1) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   user$eval__6884__6889.invokeStatic () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   user$eval__6884__6889.invoke () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   clojure.lang.Compiler.eval (System.Object form) (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
-   clojure$core$eval__22334.invokeStatic (System.Object ) (at <75aedcbf6ad14e4293bea1888c10ab1d>:0)
-   clojure$core$eval__22334.invoke (System.Object ) (at <75aedcbf6ad14e4293bea1888c10ab1d>:0)
-   clojure.lang.Var.invoke (System.Object arg1) (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
-   Arcadia.NRepl+EvalFn.invoke () (at Assets/Arcadia/Editor/NRepl.cs:256)
-   arcadia$internal$callbacks$run_callbacks__4722.invokeStatic (System.Object , System.Object ) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   arcadia$internal$callbacks$run_callbacks__4722.invoke (System.Object , System.Object ) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   arcadia$internal$editor_callbacks$run_callbacks__4816.invokeStatic () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   arcadia$internal$editor_callbacks$run_callbacks__4816.invoke () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
-   clojure.lang.Var.invoke () (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
-   Arcadia.EditorCallbacks.RunCallbacks () (at Assets/Arcadia/Editor/EditorCallbacks.cs:24)
-   UnityEditor.EditorApplication.Internal_CallUpdateFunctions () (at /Users/builduser/buildslave/unity/build/Editor/Mono/EditorApplication.cs:303)
-   #+end_src
+  As of [2019-12-30 Mon] connecting to the nREPL using [[https://github.com/clojure-emacs/cider][Cider]] doesn't work for
+  me. I get error messages like the one below:
 
-* Running Battle Arena
-  In the Battle Arena git repository directory:
-
-  #+begin_src bash
-  ./load.sh
+  #+begin_src text
+  MissingMethodException: Cannot find member split matching args
+  (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
+  (wrapper dynamic-method) System.Object.CallSite.Target(System.Runtime.CompilerServices.Closure,System.Runtime.CompilerServices.CallSite,object,object)
+  user$eval__6884__6889.__interop_split6891 (System.Object , System.Object __temp_1) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  user$eval__6884__6889.invokeStatic () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  user$eval__6884__6889.invoke () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  clojure.lang.Compiler.eval (System.Object form) (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
+  clojure$core$eval__22334.invokeStatic (System.Object ) (at <75aedcbf6ad14e4293bea1888c10ab1d>:0)
+  clojure$core$eval__22334.invoke (System.Object ) (at <75aedcbf6ad14e4293bea1888c10ab1d>:0)
+  clojure.lang.Var.invoke (System.Object arg1) (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
+  Arcadia.NRepl+EvalFn.invoke () (at Assets/Arcadia/Editor/NRepl.cs:256)
+  arcadia$internal$callbacks$run_callbacks__4722.invokeStatic (System.Object , System.Object ) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  arcadia$internal$callbacks$run_callbacks__4722.invoke (System.Object , System.Object ) (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  arcadia$internal$editor_callbacks$run_callbacks__4816.invokeStatic () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  arcadia$internal$editor_callbacks$run_callbacks__4816.invoke () (at <87f26d80bb03477db7e8b2a5eaa5becd>:0)
+  clojure.lang.Var.invoke () (at <fb1204dbf0b848beaab1559f81f1b22c>:0)
+  Arcadia.EditorCallbacks.RunCallbacks () (at Assets/Arcadia/Editor/EditorCallbacks.cs:24)
+  UnityEditor.EditorApplication.Internal_CallUpdateFunctions () (at /Users/builduser/buildslave/unity/build/Editor/Mono/EditorApplication.cs:303)
   #+end_src
 
-  Now you should see a populated scene in the Unity window. If you press the
-  play button you should be able to click around to move the blue block.
-
-* Interacting with the game
-  TODO
 
 * Author
-  [Murilo Pereira](http://murilopereira.com)
+  [[http://murilopereira.com][Murilo Pereira]]
 
 * License
-  [MIT](http://opensource.org/licenses/MIT)
+  [[http://opensource.org/licenses/MIT][MIT]]

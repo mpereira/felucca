@@ -1,6 +1,6 @@
-(ns battle-arena.utils
+(ns felucca.utils
   (:use arcadia.core)
-  (:require [battle-arena.vector3 :refer :all])
+  (:require [felucca.vector3 :refer :all])
   (:import IEnumerator
            Timeline
            [UnityEngine

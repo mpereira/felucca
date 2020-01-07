@@ -1,4 +1,4 @@
-(ns battle-arena.vector3
+(ns felucca.vector3
   (:import [UnityEngine Vector3]))
 
 (defn v3->vector [^Vector3 v3] [(.x v3) (.y v3) (.z v3)])
