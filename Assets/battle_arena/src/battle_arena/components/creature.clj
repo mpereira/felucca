@@ -209,18 +209,20 @@
 
 (defn update! [^GameObject this role-key]
   (when (alive? this)
-    (when-let [attackee* (attackee this)]
-      (when (alive? attackee*)
-        (look-towards-position! this
-                                (.. attackee* transform localPosition))
-        (move-towards-position! this (.. attackee* transform localPosition))
-        (let [attackee*-position (.. attackee* transform localPosition)]
-          (when (within-attack-range? this attackee*)
-            (attempt-hit! this attackee*)))))
-    (let [destination* (destination this)]
-      (when-not (v3/vempty? destination*)
-        (look-towards-position! this destination*)
-        (move-towards-position! this destination*)))))
+    (let [attackee* (attackee this)]
+      (if (and attackee*
+               (alive? attackee*))
+        (do
+          (look-towards-position! this
+                                  (.. attackee* transform localPosition))
+          (move-towards-position! this (.. attackee* transform localPosition))
+          (let [attackee*-position (.. attackee* transform localPosition)]
+            (when (within-attack-range? this attackee*)
+              (attempt-hit! this attackee*))))
+        (let [destination* (destination this)]
+          (when-not (v3/vempty? destination*)
+            (look-towards-position! this destination*)
+            (move-towards-position! this destination*)))))))
 
 (def hooks
   {:start #'start!
