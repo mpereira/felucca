@@ -4,7 +4,7 @@
 A game inspired by [[https://en.wikipedia.org/wiki/Ultima_Online][Ultima Online]]. Currently in the the early phases of
 development. Made with [[https://clojure.org/][Clojure]] and [[https://unity.com/][Unity]] through [[http://arcadia-unity.github.io/][Arcadia]].
 
-![Felucca gameplay](https://www.dropbox.com/s/cnowxhgtf55rzdx/felucca-0.gif?raw=1)
+I'll add a video of the gameplay here soon.
 
 * Dependencies
   - Unity (last tested with =2019.2.17f1=)
@@ -24,12 +24,10 @@ development. Made with [[https://clojure.org/][Clojure]] and [[https://unity.com
    3. Select the directory for the git repository root
    4. Click on the project row, the Unity project will load and open
    5. Go to =Edit > Project Settings > Player=
-   6. Make sure that =Resolution and Presentation > Run In Background*= is
-      checked
-   7. Make sure that =Other Settings > Configuration > Scripting Backend= is
-      =Mono=
-   8. Make sure that =Other Settings > Configuration > Api Compatibility Level=
-      is =.NET 4.0=
+   6. Make sure that =Resolution and Presentation > Run In Background*= is checked
+   7. Make sure that =Other Settings > Configuration > Scripting Backend= is =Mono=
+   8. Make sure that =Other Settings > Configuration > Api Compatibility Level= is
+      =.NET 4.0=
 
 ** Set up Arcadia
    Arcadia is a git submodule in Felucca.
@@ -81,7 +79,6 @@ development. Made with [[https://clojure.org/][Clojure]] and [[https://unity.com
   Arcadia.EditorCallbacks.RunCallbacks () (at Assets/Arcadia/Editor/EditorCallbacks.cs:24)
   UnityEditor.EditorApplication.Internal_CallUpdateFunctions () (at /Users/builduser/buildslave/unity/build/Editor/Mono/EditorApplication.cs:303)
   #+end_src
-
 
 * Author
   [[http://murilopereira.com][Murilo Pereira]]
