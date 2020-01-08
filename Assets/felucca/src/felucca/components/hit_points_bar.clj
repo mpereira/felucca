@@ -8,6 +8,22 @@
 (defmutable HitPointsBar [^Texture2D hit-points-bar-texture-background
                           ^Texture2D hit-points-bar-texture])
 
+(defn start! [^GameObject this role-key]
+  (let [hit-points-bar-texture (Texture2D. 1 1 (TextureFormat/RGB24) false)
+        hit-points-bar-texture-background (Texture2D. 1 1 (TextureFormat/RGB24) false)]
+    (.SetPixel hit-points-bar-texture-background 0 0 (Color/black))
+    (.Apply hit-points-bar-texture-background)
+    (.SetPixel hit-points-bar-texture 0 0 (Color/red))
+    (.Apply hit-points-bar-texture)
+    (update-state this
+                  :hit-points-bar
+                  (fn [hit-points-bar-state]
+                    (assoc hit-points-bar-state
+                           :hit-points-bar-texture-background
+                           hit-points-bar-texture-background
+                           :hit-points-bar-texture
+                           hit-points-bar-texture)))))
+
 (defn on-gui! [^GameObject this role-key]
   (let [hit-points-bar-state (state this :hit-points-bar)
         transform (.transform this)
@@ -32,4 +48,5 @@
                          (ScaleMode/StretchToFill)))))
 
 (def hooks
-  {:on-gui #'on-gui!})
+  {:start #'start!
+   :on-gui #'on-gui!})

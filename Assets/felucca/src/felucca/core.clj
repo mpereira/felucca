@@ -48,18 +48,10 @@
 (defn create-creature [{creature-name :name :as creature-state}
                        {:keys [color scale] :as ui}
                        position]
-  (let [hit-points-bar-texture (Texture2D. 1 1 (TextureFormat/RGB24) false)
-        hit-points-bar-texture-background (Texture2D. 1 1 (TextureFormat/RGB24) false)
-        _ (.SetPixel hit-points-bar-texture-background 0 0 (Color/black))
-        _ (.Apply hit-points-bar-texture-background)
-        _ (.SetPixel hit-points-bar-texture 0 0 (Color/red))
-        _ (.Apply hit-points-bar-texture)
-        hit-points-bar-state (hit-points-bar/->HitPointsBar
-                              hit-points-bar-texture-background
-                              hit-points-bar-texture)
-        creature-material (Material. (Shader/Find "Specular"))
-        _ (set! (.color creature-material) color)
-        creature (create-primitive :cube creature-name)]
+  (let [hit-points-bar-state (hit-points-bar/->HitPointsBar nil nil)
+        creature (create-primitive :cube creature-name)
+        creature-material (Material. (Shader/Find "Specular"))]
+    (set! (.color creature-material) color)
     (with-cmpt creature [r Renderer]
       (set! (.material r) creature-material))
     (with-cmpt creature [t Transform]
