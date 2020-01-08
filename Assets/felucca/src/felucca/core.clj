@@ -9,7 +9,7 @@
             [felucca.components.hit-points-bar :as hit-points-bar]
             [felucca.creature-spec :as creature-spec]
             [felucca.creature-specs :as creature-specs]
-            [felucca.components.rts-camera :as rts-camera]
+            [felucca.components.following-camera :as following-camera]
             [felucca.components.player-input :as player-input])
   (:import (UnityEngine
             Application
@@ -107,7 +107,7 @@
       (set! (.color l) Color/white))
     light))
 
-(defn set-up-main-camera []
+(defn set-up-main-camera [player]
   (let [main-camera (utils/find-object "Main Camera")]
     (with-cmpt main-camera [t Transform]
       (set! (.localPosition t) (v3/v3 30 25 -30))
@@ -115,9 +115,11 @@
     (with-cmpt main-camera [c Camera]
       (set! (.orthographic c) true)
       (set! (.orthographicSize c) 10)
-      (set! (.backgroundColor c) Color/clear))
-    (utils/install-hooks main-camera :rts-camera rts-camera/hooks)
-    (state+ main-camera :rts-camera (rts-camera/->RTSCamera 10 100))))
+      (set! (.backgroundColor c) Color/clear)
+      (set! (.nearClipPlane c) -100.0))
+    (utils/install-hooks main-camera :following-camera following-camera/hooks)
+    (state+ main-camera :following-camera (following-camera/->FollowingCamera
+                                           player (v3/vempty)))))
 
 (defn start []
   (def player (create-player (creature/->Creature "Player"
@@ -145,7 +147,7 @@
                                (v3/v3 12 1 12)))
   (def terrain (create-terrain))
   (def light (create-light))
-  (def main-camera (set-up-main-camera)))
+  (def main-camera (set-up-main-camera player)))
 
 (defn stop []
   (let [object-names ["a dragon"
