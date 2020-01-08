@@ -154,8 +154,12 @@
 (defn increment-hit-points! [^GameObject this value]
   (set-hit-points! this (min (max-hit-points this) (+ (hit-points this) value))))
 
+(defn die! [^GameObject this])
+
 (defn receive-hit! [^GameObject this hit]
-  (decrement-hit-points! this hit))
+  (decrement-hit-points! this hit)
+  (if (dead? this)
+    (die! this)))
 
 (defn hit! [^GameObject this
             ^GameObject attackee]
