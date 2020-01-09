@@ -5,7 +5,10 @@
   (:import [UnityEngine Debug Color Camera GUI Rect Screen Vector3 Texture2D
             Renderer ScaleMode TextureFormat]))
 
-(defmutable HitPointsBar [^Texture2D hit-points-bar-texture-background
+(defmutable HitPointsBar [^int height
+                          ^int width
+                          ^int border
+                          ^Texture2D hit-points-bar-texture-background
                           ^Texture2D hit-points-bar-texture
                           ^Texture2D hit-points-bar-texture-border])
 
@@ -30,32 +33,49 @@
                            :hit-points-bar-texture-border
                            hit-points-bar-texture-border)))))
 
-(defn on-gui! [^GameObject this role-key]
-  (let [hit-points-bar-state (state this :hit-points-bar)
-        transform (.transform this)
-        local-position (.localPosition transform)
-        size (with-cmpt this [r Renderer]
-               (.. r bounds size))
-        view-position (.. Camera main (WorldToScreenPoint local-position))
-        border 2
-        width 80
-        height 6
-        hit-points-percentage-width (* width
-                                       (creature/hit-points-percentage this))
-        x (- (.x view-position) (/ width 2))
-        y (- (Screen/height) (.y view-position) (* 25 (.y size)))]
+(defn draw! [^GameObject this
+             x
+             y
+             height
+             width
+             border
+             border-texture
+             background-texture
+             hit-points-texture]
+  (let [hit-points-percentage-width (* width
+                                       (creature/hit-points-percentage this))]
     (.. GUI (DrawTexture (Rect. (- x border)
                                 (- y border)
                                 (+ width (* 2 border))
                                 (+ height (* 2 border)))
-                         (:hit-points-bar-texture-border hit-points-bar-state)
+                         border-texture
                          (ScaleMode/StretchToFill)))
     (.. GUI (DrawTexture (Rect. x y width height)
-                         (:hit-points-bar-texture-background hit-points-bar-state)
+                         background-texture
                          (ScaleMode/StretchToFill)))
     (.. GUI (DrawTexture (Rect. x y hit-points-percentage-width height)
-                         (:hit-points-bar-texture hit-points-bar-state)
+                         hit-points-texture
                          (ScaleMode/StretchToFill)))))
+
+(defn on-gui! [^GameObject this role-key]
+  (let [{:keys [height width border] :as hit-points-bar-state}
+        (state this :hit-points-bar)
+        size (with-cmpt this [r Renderer]
+               (.. r bounds size))
+        view-position (.. Camera
+                          main
+                          (WorldToScreenPoint (.. this transform localPosition)))
+        x (- (.x view-position) (/ width 2))
+        y (- (Screen/height) (.y view-position) (* 25 (.y size)))]
+    (draw! this
+           x
+           y
+           height
+           width
+           border
+           (:hit-points-bar-texture-border hit-points-bar-state)
+           (:hit-points-bar-texture-background hit-points-bar-state)
+           (:hit-points-bar-texture hit-points-bar-state))))
 
 (def hooks
   {:start #'start!

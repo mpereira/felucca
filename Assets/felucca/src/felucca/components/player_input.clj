@@ -63,8 +63,11 @@
 ;; Hooks ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn mouse-right-click? []
+  (Input/GetKeyDown KeyCode/Mouse1))
+
 (defn update! [^GameObject this role-key]
-  (when (Input/GetKeyDown KeyCode/Mouse1)
+  (when (mouse-right-click?)
     (when-let [raycast-hit (target-hit)]
       (cond (terrain? raycast-hit) (handle-terrain-click! this raycast-hit)
             (creature? raycast-hit) (handle-creature-click! this raycast-hit)))))

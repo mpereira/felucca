@@ -7,6 +7,7 @@
             [felucca.utils :as utils]
             [felucca.components.creature :as creature]
             [felucca.components.hit-points-bar :as hit-points-bar]
+            [felucca.components.creature-bar :as creature-bar]
             [felucca.creature-spec :as creature-spec]
             [felucca.creature-specs :as creature-specs]
             [felucca.components.following-camera :as following-camera]
@@ -48,7 +49,8 @@
 (defn create-creature [{creature-name :name :as creature-state}
                        {:keys [color scale] :as ui}
                        position]
-  (let [hit-points-bar-state (hit-points-bar/->HitPointsBar nil nil)
+  (let [hit-points-bar-state (hit-points-bar/->HitPointsBar 6 80 2 nil nil nil)
+        creature-bar-state (creature-bar/->CreatureBar 40 100 2 false nil nil)
         creature (create-primitive :cube creature-name)
         creature-material (Material. (Shader/Find "Specular"))]
     (set! (.color creature-material) color)
@@ -64,6 +66,8 @@
     (state+ creature :creature creature-state)
     (utils/install-hooks creature :hit-points-bar hit-points-bar/hooks)
     (state+ creature :hit-points-bar hit-points-bar-state)
+    (utils/install-hooks creature :creature-bar creature-bar/hooks)
+    (state+ creature :creature-bar creature-bar-state)
     creature))
 
 (defn create-player [creature-state* position]
@@ -155,7 +159,9 @@
   (start))
 
 (comment
-  (in-ns 'felucca.core)
+  (in-ns 'arcadia.data)
+
+  (deref *object-db*)
 
   (reset)
 
