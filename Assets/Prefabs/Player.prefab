@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 8082308013993689656}
   - component: {fileID: 8082308013993689655}
   - component: {fileID: 8082308013993689654}
+  - component: {fileID: 1292605184588946638}
+  - component: {fileID: 1855420106846725826}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -92,3 +94,41 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1292605184588946638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8082308013993689653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: def62e394e844586829d8312ffff4c78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  strength: 0
+  dexterity: 0
+  intelligence: 0
+  hitPoints: 0
+  stamina: 0
+  mana: 0
+  movementSpeed: 0
+  rotationSpeed: 0
+  attackSpeed: 0
+  attackRange: 0
+  destination: {x: 0, y: 0, z: 0}
+  attackee: {fileID: 0}
+  threateners: []
+  lastHitAttemptedAt: 0
+--- !u!114 &1855420106846725826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8082308013993689653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d92db0bf5ee7b4426b5bb4ef4895ec7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
