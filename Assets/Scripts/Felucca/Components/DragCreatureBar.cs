@@ -5,25 +5,16 @@ namespace Felucca.Components {
     public class DragCreatureBar : MonoBehaviour {
         public Canvas canvas;
         public Creature creature;
-        public GameObject creatureBarPanel;
         
         private Camera _camera;
-        private GameObject _creatureBars;
+        private CreatureBar _creatureBar;
         private readonly RaycastHit[] _hitResults = new RaycastHit[10];
         private Vector3? _startedDraggingFrom;
         private float _dragStartThreshold = 5f;
         
         private void Start() {
             _camera = Camera.main;
-            _creatureBars = GameObject.Find("Creature Bars");
-            
-            creatureBarPanel = new GameObject(gameObject.name);
-            creatureBarPanel.SetActive(false);
-            creatureBarPanel.AddComponent<RectTransform>();
-            creatureBarPanel.AddComponent<CanvasRenderer>();
-            creatureBarPanel.AddComponent<Image>();
-            creatureBarPanel.AddComponent<CreatureBar>();
-            creatureBarPanel.transform.SetParent(_creatureBars.transform);
+            _creatureBar = CreatureBar.Create(gameObject);
         }
         
         private void OnMouseOver() {
@@ -48,9 +39,8 @@ namespace Felucca.Components {
             if (dragDistance < _dragStartThreshold) {
                 return;
             }
-            if (!creatureBarPanel.activeSelf) {
-                creatureBarPanel.SetActive(true);
-            }
+            
+            _creatureBar.ShowIfHidden();
 
             // FIXME: this is too expensive to run on every drag position.
             var targetHit = TargetHitFinder.TargetHit(false);
@@ -66,7 +56,8 @@ namespace Felucca.Components {
                 screenPoint.y - Screen.height / 2f,
                 0
             );
-            creatureBarPanel.transform.localPosition = position;
+            
+            _creatureBar.UpdatePosition(position);
         }
 
         private void OnMouseUp() {

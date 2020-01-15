@@ -27,7 +27,6 @@ namespace Felucca.Components {
         private void HandleCreatureClick(RaycastHit hit) {
             var targetCreature = hit.collider.gameObject.GetComponent<Creature>();
             creature.StartAttacking(targetCreature);
-            targetCreature.AcknowledgeAttacker(creature);
         }
 
         private void Update() {

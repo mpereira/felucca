@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Linq;
+using JetBrains.Annotations;
 using Image = UnityEngine.UI.Image;
 
 namespace Felucca.Components {
@@ -20,7 +21,7 @@ namespace Felucca.Components {
         
         public Vector3 destination;
         
-        public Creature attackee;
+        [CanBeNull] public Creature attackee;
         public Creature[] threateners;
         public float? lastHitAttemptedAt;
 
@@ -85,7 +86,9 @@ namespace Felucca.Components {
         }
 
         public void StartAttacking(Creature anotherCreature) {
-            attackee = anotherCreature;
+            if (!ReferenceEquals(anotherCreature, this)) {
+                attackee = anotherCreature;
+            }
         }
 
         public void StopAttacking() {
