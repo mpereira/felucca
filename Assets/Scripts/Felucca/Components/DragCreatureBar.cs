@@ -1,20 +1,18 @@
 using UnityEngine;
-using Image = UnityEngine.UI.Image;
 
 namespace Felucca.Components {
     public class DragCreatureBar : MonoBehaviour {
-        public Canvas canvas;
-        public Creature creature;
+        public float dragStartThreshold;
         
         private Camera _camera;
         private CreatureBar _creatureBar;
-        private readonly RaycastHit[] _hitResults = new RaycastHit[10];
         private Vector3? _startedDraggingFrom;
-        private float _dragStartThreshold = 5f;
         
         private void Start() {
             _camera = Camera.main;
             _creatureBar = CreatureBar.Create(gameObject);
+            
+            dragStartThreshold = 20f;
         }
         
         private void OnMouseOver() {
@@ -36,11 +34,12 @@ namespace Felucca.Components {
                 Input.mousePosition
             );
             
-            if (dragDistance < _dragStartThreshold) {
+            if (dragDistance < dragStartThreshold) {
                 return;
             }
             
             _creatureBar.ShowIfHidden();
+            _creatureBar.MoveToFront();
 
             // FIXME: this is too expensive to run on every drag position.
             var targetHit = TargetHitFinder.TargetHit(false);

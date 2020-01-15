@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Linq;
 using JetBrains.Annotations;
-using Image = UnityEngine.UI.Image;
 
 namespace Felucca.Components {
     public class Creature : MonoBehaviour {
