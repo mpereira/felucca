@@ -31,15 +31,19 @@ namespace Felucca.Components {
         }
 
         private void Update() {
-            var targetHit = TargetHitFinder.TargetHit();
-            if (targetHit == null) {
-                return;
-            }
             if (Input.GetKeyDown(KeyCode.Mouse1)) {
+                var targetHit = TargetHitFinder.TargetHit(true);
+                if (targetHit == null) {
+                    return;
+                }
                 if (IsTerrainClick(targetHit.Value)) {
                     HandleTerrainClick(targetHit.Value);
                 }
             } else if (DoubleClickHandler.DidDoubleClick()) {
+                var targetHit = TargetHitFinder.TargetHit(true);
+                if (targetHit == null) {
+                    return;
+                }
                 if (IsCreatureClick(targetHit.Value)) {
                     HandleCreatureClick(targetHit.Value);
                 }

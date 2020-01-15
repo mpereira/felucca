@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Felucca {
     public static class TargetHitFinder {
@@ -10,8 +11,12 @@ namespace Felucca {
             _camera = Camera.main;
         }
 
-        public static RaycastHit? TargetHit() {
+        public static RaycastHit? TargetHit(bool checkPointerOverGameObject) {
             var ray = _camera.ScreenPointToRay(Input.mousePosition);
+
+            if (checkPointerOverGameObject && EventSystem.current.IsPointerOverGameObject()) {
+                return null;
+            }
 
             Physics.RaycastNonAlloc(
                 ray,
