@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using System.Collections;
+using System.Linq;
 
 namespace Felucca.Components {
     public class Creature : MonoBehaviour {
@@ -20,20 +20,23 @@ namespace Felucca.Components {
         
         public Vector3 destination;
         
-        public GameObject attackee;
-        public GameObject[] threateners;
-        public float lastHitAttemptedAt;
+        public Creature attackee;
+        public Creature[] threateners;
+        public float? lastHitAttemptedAt;
+
+        public CharacterController characterController;
         
         ////////////////////////////////////////////////////////////////////////
         // Lifecycle ///////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
-        private void Awake() {
+        private void Start() {
             strength = 50;
             rotationSpeed = 50;
             movementSpeed = 50;
             hitPoints = strength;
             destination = transform.localPosition;
+            characterController = GetComponent<CharacterController>();
         }
 
         private void Update() {
@@ -41,6 +44,12 @@ namespace Felucca.Components {
                 if (!IsAtDestination()) {
                     LookTowardsPosition(destination);
                     MoveTowardsPosition(destination);
+                }
+                if (attackee != null && attackee.IsAlive()) {
+                    SetDestination(attackee.transform.localPosition);
+                    if (WithinAttackRange(attackee)) {
+                        AttemptHit(attackee);
+                    }
                 }
             }
         }
@@ -67,9 +76,43 @@ namespace Felucca.Components {
 
         public void MoveTowardsPosition(Vector3 position) {
             if ((transform.localPosition - position).magnitude > 0.5) {
-                GetComponent<CharacterController>().SimpleMove(
+                characterController.SimpleMove(
                     transform.forward * NormalizedMovementSpeed()
                 );
+            }
+        }
+
+        public void StartAttacking(Creature anotherCreature) {
+            attackee = anotherCreature;
+        }
+
+        public void StopAttacking() {
+            attackee = null;
+        }
+
+        public void AcknowledgeAttacker(Creature attackingCreature) {
+            StartAttacking(attackingCreature);
+            threateners.Append<Creature>(attackingCreature);
+        }
+
+        public void Die() {
+        }
+
+        public void ReceiveHit(int damage) {
+            hitPoints = Mathf.Clamp(hitPoints - damage, 0, MaxHitPoints());
+            if (IsDead()) {
+                Die();
+            }
+        }
+
+        public void Hit(Creature anotherCreature) {
+            lastHitAttemptedAt = Time.time;
+            anotherCreature.ReceiveHit(5);
+        }
+        
+        public void AttemptHit(Creature anotherCreature) {
+            if (IsRecoveredFromPreviousHit()) {
+                Hit(anotherCreature);
             }
         }
 
@@ -80,6 +123,22 @@ namespace Felucca.Components {
         ////////////////////////////////////////////////////////////////////////
         // Domain logic ////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
+
+        public bool WithinAttackRange(Creature anotherCreature) {
+            return NormalizedAttackRange() > Vector3.Distance(
+                transform.localPosition,
+                anotherCreature.gameObject.transform.localPosition
+            );
+        }
+
+        public bool IsRecoveredFromPreviousHit() {
+            return lastHitAttemptedAt == null ||
+                   Time.time - lastHitAttemptedAt > NormalizedAttackSpeed();
+        }
+
+        public int MaxHitPoints() {
+            return strength;
+        }
 
         public bool IsAlive() {
             return hitPoints > 0;
@@ -99,6 +158,14 @@ namespace Felucca.Components {
         
         private float NormalizedMovementSpeed() {
             return movementSpeed / 10f;
+        }
+        
+        private float NormalizedAttackSpeed() {
+            return attackSpeed / 10f;
+        }
+        
+        private float NormalizedAttackRange() {
+            return attackRange / 50f;
         }
     }
 }
