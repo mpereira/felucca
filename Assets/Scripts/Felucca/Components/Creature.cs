@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.UIElements;
+using Image = UnityEngine.UI.Image;
 
 namespace Felucca.Components {
     public class Creature : MonoBehaviour {
@@ -25,6 +27,13 @@ namespace Felucca.Components {
         public float? lastHitAttemptedAt;
 
         public CharacterController characterController;
+        private Camera _camera;
+        
+        public Canvas canvas;
+        public GameObject creatureBarPanel;
+        private readonly RaycastHit[] _hitResults = new RaycastHit[10];
+        private Vector3? _startedDraggingFrom;
+        private float _dragStartThreshold = 5f;
         
         ////////////////////////////////////////////////////////////////////////
         // Lifecycle ///////////////////////////////////////////////////////////
@@ -37,6 +46,64 @@ namespace Felucca.Components {
             hitPoints = strength;
             destination = transform.localPosition;
             characterController = GetComponent<CharacterController>();
+            _camera = Camera.main;
+
+            canvas = FindObjectOfType<Canvas>();
+            
+            creatureBarPanel = new GameObject();
+            creatureBarPanel.SetActive(false);
+            creatureBarPanel.AddComponent<RectTransform>();
+            creatureBarPanel.AddComponent<CanvasRenderer>();
+            creatureBarPanel.AddComponent<Image>();
+            creatureBarPanel.AddComponent<CreatureBar>();
+            creatureBarPanel.transform.SetParent(FindObjectOfType<Canvas>().gameObject.transform);
+        }
+
+        private void OnMouseDown() {
+            Debug.Log("mousedown: " + gameObject.name);
+            
+            if (Input.GetKeyDown(KeyCode.Mouse0)) {
+                _startedDraggingFrom = Input.mousePosition;
+            }
+        }
+
+        private void OnMouseDrag() {
+            if (_startedDraggingFrom == null) {
+                return;
+            }
+
+            var dragDistance = Vector3.Distance(
+                _startedDraggingFrom.Value,
+                Input.mousePosition
+            );
+            
+            if (dragDistance < _dragStartThreshold) {
+                return;
+            }
+            if (!creatureBarPanel.activeSelf) {
+                creatureBarPanel.SetActive(true);
+            }
+
+            var targetHit = TargetHitFinder.TargetHit();
+            if (targetHit == null) {
+                return;
+            }
+            var screenPoint = _camera.WorldToScreenPoint(
+                targetHit.Value.point
+            );
+
+            var position = new Vector3(
+                screenPoint.x - Screen.width / 2f,
+                screenPoint.y - Screen.height / 2f,
+                0
+            );
+            creatureBarPanel.transform.localPosition = position;
+        }
+
+        private void OnMouseUp() {
+            if (Input.GetKeyDown(KeyCode.Mouse0)) {
+                _startedDraggingFrom = null;
+            }
         }
 
         private void Update() {

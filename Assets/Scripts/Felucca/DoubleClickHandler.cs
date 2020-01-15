@@ -1,12 +1,12 @@
 using UnityEngine;
 
 namespace Felucca {
-    public class DoubleClickHandler {
-        private int _clicks = 0;
-        private float _lastClickedAt = 0f;
+    public static class DoubleClickHandler {
+        private static int _clicks = 0;
+        private static float _lastClickedAt = 0f;
         private const float MaximumClickDelay = 0.5f;
 
-        public bool DidDoubleClick() {
+        public static bool DidDoubleClick() {
             if (Input.GetMouseButtonDown(0)) {
                 _clicks++;
                 if (_clicks == 1) {
