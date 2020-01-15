@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
@@ -20,8 +21,10 @@ namespace Felucca.Components {
         public Creature creature;
         public Creature playerCreature;
         
-        private Vector2 _lastMousePosition;
+        public Image hitPointsImage;
         public RectTransform rectTransform;
+        
+        private Vector2 _lastMousePosition;
 
         public CreatureBar() {
             width = 80;
@@ -41,37 +44,60 @@ namespace Felucca.Components {
             var creatureBarContainer = new GameObject(gameObject.name);
             var creatureBar = creatureBarContainer.AddComponent<CreatureBar>();
             creatureBarContainer.transform.SetParent(creatureBars.transform);
-            
-            var creatureBarBackground = new GameObject("Background");
-            creatureBarBackground.transform.SetParent(creatureBarContainer.transform);
-            var backgroundImage = creatureBarBackground.AddComponent<Image>();
-            var backgroundRectTransform = creatureBarBackground.GetComponent<RectTransform>();
-            
-            var creatureBarText = new GameObject("Text");
-            creatureBarText.transform.SetParent(creatureBarContainer.transform);
-            var text = creatureBarText.AddComponent<TextMeshProUGUI>();
-            var textRectTransform = creatureBarText.GetComponent<RectTransform>();
-            
-            var color = Color.white;
-            color.a = 0.5f;
-            backgroundImage.color = color;
 
             var sizeDelta = new Vector2(creatureBar.width, creatureBar.height);
             
+            var creatureBarBackground = new GameObject("Background");
+            creatureBarBackground.transform.SetParent(creatureBarContainer.transform);
+            var backgroundImageColor = Color.white;
+            backgroundImageColor.a = 0.5f;
+            // The Image component comes with a RectTransform.
+            var backgroundImage = creatureBarBackground.AddComponent<Image>();
+            backgroundImage.color = backgroundImageColor;
+            var backgroundRectTransform = creatureBarBackground.GetComponent<RectTransform>();
             backgroundRectTransform.sizeDelta = sizeDelta;
-            textRectTransform.sizeDelta = sizeDelta;
             
+            var creatureBarText = new GameObject("Text");
+            creatureBarText.transform.SetParent(creatureBarContainer.transform);
+            // The TextMeshProUGUI component comes with a RectTransform.
+            var text = creatureBarText.AddComponent<TextMeshProUGUI>();
             text.text = gameObject.name;
             text.alignment = TextAlignmentOptions.TopGeoAligned;
             text.fontSize = 12f;
+            var textRectTransform = creatureBarText.GetComponent<RectTransform>();
+            textRectTransform.sizeDelta = sizeDelta;
+            
+            var creatureBarHitPoints = new GameObject("Hit Points");
+            creatureBarHitPoints.transform.SetParent(creatureBarContainer.transform);
+            var hitPointsImage = creatureBarHitPoints.AddComponent<Image>();
+            var hitPointsRectTransform = creatureBarHitPoints.GetComponent<RectTransform>();
+            hitPointsImage.color = Color.red;
+            // http://www.1x1px.me/.
+            hitPointsImage.sprite = Resources.Load<Sprite>("FFFFFF-1");
+            hitPointsImage.type = Image.Type.Filled;
+            hitPointsImage.fillMethod = Image.FillMethod.Horizontal;
+            hitPointsRectTransform.sizeDelta = new Vector2(sizeDelta.x * 0.8f, 8);
+            hitPointsRectTransform.position = new Vector3(0, 8, 0);
+            // Anchor bottom center works nice with sizeDelta.y == position.
+            hitPointsRectTransform.anchorMax = new Vector2(0.5f, 0);
+            hitPointsRectTransform.anchorMin = new Vector2(0.5f, 0);
             
             creatureBar.creatureBarContainer = creatureBarContainer;
             creatureBar.creature = gameObject.GetComponent<Creature>();
             creatureBar.playerCreature = playerCreature;
+            creatureBar.hitPointsImage = hitPointsImage;
             
             creatureBar.Hide();
             
             return creatureBar;
+        }
+
+        public float CreatureHitPointPercentage() {
+            return (float) creature.hitPoints / creature.MaxHitPoints();
+        }
+
+        private void Update() {
+            hitPointsImage.fillAmount = CreatureHitPointPercentage();
         }
 
         public void Hide() {

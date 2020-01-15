@@ -35,6 +35,8 @@ namespace Felucca.Components {
             strength = 50;
             rotationSpeed = 50;
             movementSpeed = 50;
+            attackSpeed = 50;
+            attackRange = 50;
             hitPoints = strength;
             destination = transform.localPosition;
             characterController = GetComponent<CharacterController>();
@@ -128,11 +130,15 @@ namespace Felucca.Components {
         // Domain logic ////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
-        public bool WithinAttackRange(Creature anotherCreature) {
-            return NormalizedAttackRange() > Vector3.Distance(
+        public float Distance(Creature anotherCreature) {
+            return Vector3.Distance(
                 transform.localPosition,
                 anotherCreature.gameObject.transform.localPosition
             );
+        }
+
+        public bool WithinAttackRange(Creature anotherCreature) {
+            return NormalizedAttackRange() > Distance(anotherCreature);
         }
 
         public bool IsRecoveredFromPreviousHit() {
@@ -169,7 +175,7 @@ namespace Felucca.Components {
         }
         
         private float NormalizedAttackRange() {
-            return attackRange / 50f;
+            return attackRange / 25f;
         }
     }
 }
