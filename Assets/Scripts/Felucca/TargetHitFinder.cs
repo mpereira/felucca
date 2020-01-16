@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,6 +18,8 @@ namespace Felucca {
             if (checkPointerOverGameObject && EventSystem.current.IsPointerOverGameObject()) {
                 return null;
             }
+            
+            Array.Clear(HitResults, 0, 10);
 
             Physics.RaycastNonAlloc(
                 ray,
@@ -25,7 +28,7 @@ namespace Felucca {
                 Physics.DefaultRaycastLayers
             );
 
-            return HitResults.First();
+            return HitResults.Where(hit => hit.collider).Last();
         }
     }
 }

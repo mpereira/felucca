@@ -11,12 +11,10 @@ GameObject:
   - component: {fileID: 8082308013993689657}
   - component: {fileID: 8082308013993689656}
   - component: {fileID: 8082308013993689655}
-  - component: {fileID: 8082308013993689654}
   - component: {fileID: 1292605184588946638}
-  - component: {fileID: 1855420106846725826}
   - component: {fileID: 1790691320}
   m_Layer: 0
-  m_Name: Player
+  m_Name: a dragon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,8 +28,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8082308013993689653}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 500, y: 1.5, z: 500}
-  m_LocalScale: {x: 1, y: 3, z: 1}
+  m_LocalPosition: {x: 510, y: 2, z: 510}
+  m_LocalScale: {x: 2, y: 4, z: 2}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -61,7 +59,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8c15709dfb6474eaa9cb35348a2974c1, type: 2}
+  - {fileID: 2100000, guid: 6801338c87d7d4674a234efe69337dec, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -82,19 +80,6 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
---- !u!65 &8082308013993689654
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8082308013993689653}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1292605184588946638
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,34 +92,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: def62e394e844586829d8312ffff4c78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strength: 50
-  dexterity: 50
-  intelligence: 50
+  strength: 100
+  dexterity: 100
+  intelligence: 100
   hitPoints: 0
   stamina: 0
   mana: 0
-  movementSpeed: 50
-  rotationSpeed: 50
-  attackSpeed: 50
-  attackRange: 50
+  movementSpeed: 70
+  rotationSpeed: 70
+  attackSpeed: 70
+  attackRange: 70
   destination: {x: 0, y: 0, z: 0}
   attackee: {fileID: 0}
   threateners: []
   characterController: {fileID: 0}
   dragCreatureBar: {fileID: 0}
---- !u!114 &1855420106846725826
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8082308013993689653}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d92db0bf5ee7b4426b5bb4ef4895ec7d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  creature: {fileID: 0}
 --- !u!143 &1790691320
 CharacterController:
   m_ObjectHideFlags: 0

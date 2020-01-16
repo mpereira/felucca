@@ -5,10 +5,23 @@ namespace Felucca {
     public class Game : MonoBehaviour {
         public Camera mainCamera;
         public Light mainLight;
+        
+        public GameObject playerPrefab;
+        public GameObject ratmanPrefab;
+        public GameObject dragonPrefab;
+        
         public Player player;
+        public Creature ratman;
+        public Creature dragon;
         
         void Awake() {
-            player = FindObjectOfType<Player>();
+            player = Instantiate(playerPrefab).GetComponent<Player>();
+            player.name = "Player";
+            ratman = Instantiate(ratmanPrefab).GetComponent<Creature>();
+            ratman.name = "a ratman";
+            dragon = Instantiate(dragonPrefab).GetComponent<Creature>();
+            dragon.name = "a dragon";
+            
             mainLight = FindObjectOfType<Light>();
             mainCamera = Camera.main;
             

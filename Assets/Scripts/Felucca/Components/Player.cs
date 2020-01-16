@@ -10,7 +10,7 @@ namespace Felucca.Components {
         }
 
         private static bool IsCreatureClick(RaycastHit hit) {
-            return hit.collider.gameObject.TryGetComponent(out Creature _);
+            return hit.transform.gameObject.TryGetComponent(out Creature _);
         }
 
         private static bool IsTerrainClick(RaycastHit hit) {
@@ -27,6 +27,7 @@ namespace Felucca.Components {
         private void HandleCreatureClick(RaycastHit hit) {
             var targetCreature = hit.collider.gameObject.GetComponent<Creature>();
             creature.StartAttacking(targetCreature);
+            targetCreature.AcknowledgeAttacker(creature);
         }
 
         private void Update() {

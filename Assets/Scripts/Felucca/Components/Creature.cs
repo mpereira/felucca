@@ -32,13 +32,12 @@ namespace Felucca.Components {
         ////////////////////////////////////////////////////////////////////////
 
         private void Start() {
-            strength = 50;
-            rotationSpeed = 50;
-            movementSpeed = 50;
-            attackSpeed = 50;
-            attackRange = 50;
             hitPoints = strength;
+            stamina = dexterity;
+            mana = intelligence;
+            
             destination = transform.localPosition;
+            
             characterController = GetComponent<CharacterController>();
             dragCreatureBar = gameObject.AddComponent<DragCreatureBar>();
         }
