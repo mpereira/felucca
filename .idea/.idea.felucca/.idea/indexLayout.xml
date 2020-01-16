@@ -18,7 +18,6 @@
       <Path>Library</Path>
       <Path>Logs</Path>
       <Path>Temp</Path>
-      <Path>felucca</Path>
       <Path>obj</Path>
     </explicitExcludes>
   </component>
