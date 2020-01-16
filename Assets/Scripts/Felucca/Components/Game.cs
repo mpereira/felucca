@@ -29,6 +29,7 @@ namespace Felucca {
             mainLight.type = LightType.Directional;
             mainLight.intensity = 1.5f;
             mainLight.shadows = LightShadows.Soft;
+            mainLight.shadowStrength = 0.2f;
             
             var followingCamera = mainCamera.gameObject.AddComponent<FollowingCamera>();
             followingCamera.followee = player.gameObject;

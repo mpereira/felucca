@@ -4,28 +4,37 @@ using UnityEngine;
 namespace Felucca.Components {
     public class FollowingCamera : MonoBehaviour {
         public GameObject followee;
+        public Vector3 position;
+        public Vector3 rotation;
+        public bool isFollowing;
         
         private Camera _camera;
-        private Vector3 _position;
         
         private void Start() {
-            _position = new Vector3(0, 50, 0);
+            position = new Vector3(0, 43, 0);
+            rotation = new Vector3(45, -45, 0);
+            isFollowing = true;
             
             _camera = gameObject.GetComponent<Camera>();
             _camera.orthographic = true;
             _camera.orthographicSize = 10f;
             _camera.backgroundColor = Color.clear;
-            _camera.transform.localPosition = _position;
-            _camera.transform.localEulerAngles = new Vector3(30, -45, 0);
             _camera.clearFlags = CameraClearFlags.SolidColor;
+            
+            _camera.transform.localPosition = position;
+            _camera.transform.localEulerAngles = rotation;
         }
         
         private void LateUpdate() {
-            // FIXME: where is this 60 coming from? It is likely related to the 
-            // camera position y axis of 50.
-            _position.x = followee.transform.position.x + 60;
-            _position.z = followee.transform.position.z - 60;
-            _camera.transform.localPosition = _position;
+            if (isFollowing) {
+                // FIXME: where are these magic numbers coming from? They are
+                // likely related to the camera position y axis.
+                position.x = followee.transform.position.x + 30;
+                position.z = followee.transform.position.z - 30;
+            }
+            
+            _camera.transform.localPosition = position;
+            _camera.transform.localEulerAngles = rotation;
         }
     }
 }
