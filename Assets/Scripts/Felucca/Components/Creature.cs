@@ -49,7 +49,7 @@ namespace Felucca.Components {
                     MoveTowardsPosition(destination);
                 }
                 if (attackee != null && attackee.IsAlive()) {
-                    SetDestination(attackee.transform.localPosition);
+                    StartMovingTowards(attackee.transform.localPosition);
                     if (WithinAttackRange(attackee)) {
                         AttemptHit(attackee);
                     }
@@ -121,8 +121,12 @@ namespace Felucca.Components {
             }
         }
 
-        public void SetDestination(Vector3 _destination) {
+        public void StartMovingTowards(Vector3 _destination) {
             destination = _destination;
+        }
+        
+        public void StopMoving() {
+            destination = transform.localPosition;
         }
         
         ////////////////////////////////////////////////////////////////////////

@@ -21,7 +21,7 @@ namespace Felucca.Components {
             creature.StopAttacking();
             var point = hit.point;
             point.y = this.transform.localPosition.y;
-            creature.SetDestination(point);
+            creature.StartMovingTowards(point);
         }
 
         private void HandleCreatureClick(RaycastHit hit) {
@@ -31,7 +31,7 @@ namespace Felucca.Components {
         }
 
         private void Update() {
-            if (Input.GetKeyDown(KeyCode.Mouse1)) {
+            if (Input.GetKey(KeyCode.Mouse1)) {
                 var targetHit = TargetHitFinder.TargetHit(true);
                 if (targetHit == null) {
                     return;
@@ -47,6 +47,8 @@ namespace Felucca.Components {
                 if (IsCreatureClick(targetHit.Value)) {
                     HandleCreatureClick(targetHit.Value);
                 }
+            } else if (Input.GetKeyUp(KeyCode.Mouse1)) {
+                creature.StopMoving();
             }
         }
     }
