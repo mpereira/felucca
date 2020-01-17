@@ -13,12 +13,12 @@ namespace Felucca.Components {
         }
 
         private float StatIncreaseChance(String stat) {
-            // Make this depend on stat, etc.
+            // TODO: Make this depend on stat, etc.
             return 0.1f;
         }
 
         private float SkillIncreaseChance(String skill) {
-            // Make this depend on skill, etc..
+            // TODO: Make this depend on skill, etc..
             return 0.1f;
         }
 

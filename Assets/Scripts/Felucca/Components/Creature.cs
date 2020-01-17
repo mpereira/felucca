@@ -139,9 +139,14 @@ namespace Felucca.Components {
             }
         }
 
+        public int Damage() {
+            // TODO: make it depend on stats, skills, equips, etc.
+            return 5;
+        }
+
         public void Hit(Creature anotherCreature) {
             lastHitAttemptedAt = Time.time;
-            anotherCreature.ReceiveHit(5);
+            anotherCreature.ReceiveHit(Damage());
         }
 
         public void Miss(Creature anotherCreature) {
