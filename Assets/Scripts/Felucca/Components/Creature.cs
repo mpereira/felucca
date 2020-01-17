@@ -35,6 +35,8 @@ namespace Felucca.Components {
         public DragCreatureBar dragCreatureBar;
         public StatAndSkillSystem statAndSkillSystem;
 
+        public float moveThreshold = 0.5f;
+
         public delegate void OnHitAttempted();
         public event Action onHitAttempted;
         
@@ -105,7 +107,7 @@ namespace Felucca.Components {
         }
 
         public void MoveTowardsPosition(Vector3 position) {
-            if ((transform.localPosition - position).magnitude > 0.5) {
+            if (Distance(position) > moveThreshold) {
                 characterController.SimpleMove(
                     transform.forward * NormalizedMovementSpeed()
                 );
@@ -173,11 +175,12 @@ namespace Felucca.Components {
         // Domain logic ////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
+        public float Distance(Vector3 position) {
+            return Vector3.Distance(transform.localPosition, position);
+        }
+
         public float Distance(Creature anotherCreature) {
-            return Vector3.Distance(
-                transform.localPosition,
-                anotherCreature.gameObject.transform.localPosition
-            );
+            return Distance(anotherCreature.gameObject.transform.localPosition);
         }
 
         public bool WithinAttackRange(Creature anotherCreature) {
