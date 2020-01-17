@@ -32,8 +32,6 @@ namespace Felucca.Components {
         public float? lastHitAttemptedAt;
 
         public CharacterController characterController;
-        public DragCreatureBar dragCreatureBar;
-        public StatAndSkillSystem statAndSkillSystem;
 
         public float moveThreshold = 0.5f;
 
@@ -52,9 +50,6 @@ namespace Felucca.Components {
             destination = transform.localPosition;
             
             characterController = GetComponent<CharacterController>();
-            dragCreatureBar = gameObject.AddComponent<DragCreatureBar>();
-            statAndSkillSystem = gameObject.AddComponent<StatAndSkillSystem>();
-            statAndSkillSystem.creature = this;
         }
 
         private void Update() {

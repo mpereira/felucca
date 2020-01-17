@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Felucca {
     public class Game : MonoBehaviour {
-        public Camera mainCamera;
         public Light mainLight;
         
         public GameObject playerPrefab;
@@ -23,16 +22,14 @@ namespace Felucca {
             dragon.name = "a dragon";
             
             mainLight = FindObjectOfType<Light>();
-            mainCamera = Camera.main;
-            
             mainLight.transform.localRotation = Quaternion.Euler(45, -30, 0);
             mainLight.type = LightType.Directional;
             mainLight.intensity = 1.5f;
             mainLight.shadows = LightShadows.Soft;
             mainLight.shadowStrength = 0.2f;
             
-            var followingCamera = mainCamera.gameObject.AddComponent<FollowingCamera>();
-            followingCamera.followee = player.gameObject;
+            var followingCamera = FindObjectOfType<FollowingCamera>();
+            followingCamera.Follow(player.creature);
         }
     }
 }

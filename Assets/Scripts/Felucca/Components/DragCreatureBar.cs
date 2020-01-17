@@ -11,8 +11,6 @@ namespace Felucca.Components {
         private void Start() {
             _camera = Camera.main;
             _creatureBar = CreatureBar.Create(gameObject);
-            
-            dragStartThreshold = 10f;
         }
         
         private void OnMouseOver() {
