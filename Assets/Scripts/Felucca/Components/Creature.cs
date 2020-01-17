@@ -1,16 +1,23 @@
+using System;
 using UnityEngine;
 using System.Linq;
 using JetBrains.Annotations;
+using Random = UnityEngine.Random;
 
 namespace Felucca.Components {
     public class Creature : MonoBehaviour {
+        // Stats.
         public int strength;
         public int dexterity;
         public int intelligence;
         
+        // Attributes.
         public int hitPoints;
         public int stamina;
         public int mana;
+        
+        // Skills.
+        public float wrestling;
         
         public int movementSpeed;
         public int rotationSpeed;
@@ -26,6 +33,10 @@ namespace Felucca.Components {
 
         public CharacterController characterController;
         public DragCreatureBar dragCreatureBar;
+        public StatAndSkillSystem statAndSkillSystem;
+
+        public delegate void OnHitAttempted();
+        public event Action onHitAttempted;
         
         ////////////////////////////////////////////////////////////////////////
         // Lifecycle ///////////////////////////////////////////////////////////
@@ -40,6 +51,8 @@ namespace Felucca.Components {
             
             characterController = GetComponent<CharacterController>();
             dragCreatureBar = gameObject.AddComponent<DragCreatureBar>();
+            statAndSkillSystem = gameObject.AddComponent<StatAndSkillSystem>();
+            statAndSkillSystem.creature = this;
         }
 
         private void Update() {
@@ -60,6 +73,20 @@ namespace Felucca.Components {
         ////////////////////////////////////////////////////////////////////////
         // Actions /////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
+
+        public void IncreaseStat(String stat, int increase) {
+            switch (stat) {
+                case "strength": { strength += increase; break; }
+                case "dexterity": { dexterity += increase; break; }
+                case "intelligence": { intelligence += increase; break; }
+            }
+        }
+        
+        public void IncreaseSkill(String skill, float increase) {
+            switch (skill) {
+                case "wrestling": { wrestling += increase; break; }
+            }
+        }
 
         public void LookTowardsPosition(Vector3 position) {
             var currentPosition = transform.localPosition;
@@ -114,10 +141,23 @@ namespace Felucca.Components {
             lastHitAttemptedAt = Time.time;
             anotherCreature.ReceiveHit(5);
         }
+
+        public void Miss(Creature anotherCreature) {
+        }
+
+        public float HitChance(Creature anotherCreature) {
+            // TODO: make this depend on stats, skills, etc.
+            return 0.5f;
+        }
         
         public void AttemptHit(Creature anotherCreature) {
             if (IsRecoveredFromPreviousHit()) {
-                Hit(anotherCreature);
+                onHitAttempted();
+                if (HitChance(anotherCreature) > Random.value) {
+                    Hit(anotherCreature);
+                } else {
+                    Miss(anotherCreature);
+                }
             }
         }
 
@@ -178,7 +218,7 @@ namespace Felucca.Components {
         }
         
         private float NormalizedAttackRange() {
-            return attackRange / 25f;
+            return attackRange / 20f;
         }
     }
 }
