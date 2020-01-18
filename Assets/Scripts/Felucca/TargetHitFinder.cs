@@ -6,19 +6,20 @@ using UnityEngine.EventSystems;
 namespace Felucca {
     public static class TargetHitFinder {
         private static readonly RaycastHit[] HitResults = new RaycastHit[10];
-        private static readonly Camera _camera;
+        private static readonly Camera       MainCamera;
 
         static TargetHitFinder() {
-            _camera = Camera.main;
+            MainCamera = Camera.main;
         }
 
         public static RaycastHit? TargetHit(bool checkPointerOverGameObject) {
-            var ray = _camera.ScreenPointToRay(Input.mousePosition);
+            var ray = MainCamera.ScreenPointToRay(Input.mousePosition);
 
-            if (checkPointerOverGameObject && EventSystem.current.IsPointerOverGameObject()) {
+            if (checkPointerOverGameObject &&
+                EventSystem.current.IsPointerOverGameObject()) {
                 return null;
             }
-            
+
             Array.Clear(HitResults, 0, 10);
 
             Physics.RaycastNonAlloc(
@@ -28,7 +29,7 @@ namespace Felucca {
                 Physics.DefaultRaycastLayers
             );
 
-            return HitResults.Where(hit => hit.collider).Last();
+            return HitResults.Last(hit => hit.collider);
         }
     }
 }

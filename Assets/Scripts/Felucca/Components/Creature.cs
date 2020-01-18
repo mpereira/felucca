@@ -10,34 +10,36 @@ namespace Felucca.Components {
         public int strength;
         public int dexterity;
         public int intelligence;
-        
+
         // Attributes.
         public int hitPoints;
         public int stamina;
         public int mana;
-        
+
         // Skills.
-        public float wrestling;
-        
+        public double wrestling;
+
         public int movementSpeed;
         public int rotationSpeed;
         public int attackSpeed;
-        
+
         public int attackRange;
-        
+
         public Vector3 destination;
-        
-        [CanBeNull] public Creature attackee;
-        public Creature[] threateners;
-        public float? lastHitAttemptedAt;
+
+        [CanBeNull] public Creature   attackee;
+        public             Creature[] threateners;
+        public             float?     lastHitAttemptedAt;
 
         public CharacterController characterController;
 
         public float moveThreshold = 0.5f;
 
-        public delegate void OnHitAttempted();
-        public event Action onHitAttempted;
-        
+        public event Action OnHitAttempted;
+        public event Action OnHit;
+        public event Action OnMiss;
+        public event Action OnDeath;
+
         ////////////////////////////////////////////////////////////////////////
         // Lifecycle ///////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
@@ -46,9 +48,9 @@ namespace Felucca.Components {
             hitPoints = strength;
             stamina = dexterity;
             mana = intelligence;
-            
+
             destination = transform.localPosition;
-            
+
             characterController = GetComponent<CharacterController>();
         }
 
@@ -58,6 +60,7 @@ namespace Felucca.Components {
                     LookTowardsPosition(destination);
                     MoveTowardsPosition(destination);
                 }
+
                 if (attackee != null && attackee.IsAlive()) {
                     StartMovingTowards(attackee.transform.localPosition);
                     if (WithinAttackRange(attackee)) {
@@ -66,22 +69,36 @@ namespace Felucca.Components {
                 }
             }
         }
-        
+
         ////////////////////////////////////////////////////////////////////////
         // Actions /////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
 
-        public void IncreaseStat(String stat, int increase) {
+        public int IncreaseStat(String stat, int increase) {
             switch (stat) {
-                case "strength": { strength += increase; break; }
-                case "dexterity": { dexterity += increase; break; }
-                case "intelligence": { intelligence += increase; break; }
+                case "strength": {
+                    strength += increase;
+                    return strength;
+                }
+                case "dexterity": {
+                    dexterity += increase;
+                    return dexterity;
+                }
+                case "intelligence": {
+                    intelligence += increase;
+                    return intelligence;
+                }
+                default: return 0;
             }
         }
-        
-        public void IncreaseSkill(String skill, float increase) {
+
+        public double IncreaseSkill(String skill, double increase) {
             switch (skill) {
-                case "wrestling": { wrestling += increase; break; }
+                case "wrestling": {
+                    wrestling += increase;
+                    return Math.Round(wrestling, 2);
+                }
+                default: return 0f;
             }
         }
 
@@ -127,6 +144,9 @@ namespace Felucca.Components {
         public void Die() {
         }
 
+        public void Resurrect() {
+        }
+
         public void ReceiveHit(int damage) {
             hitPoints = Mathf.Clamp(hitPoints - damage, 0, MaxHitPoints());
             if (IsDead()) {
@@ -134,6 +154,16 @@ namespace Felucca.Components {
             }
         }
 
+        public void Heal(int amount) {
+            var wasDead = IsDead();
+            hitPoints = Mathf.Clamp(hitPoints + amount, 0, MaxHitPoints());
+            if (wasDead && IsAlive()) {
+                Resurrect();
+            }
+        }
+
+        // http://www.uoguide.com/Damage_Increase
+        // https://uo.stratics.com/content/arms-armor/damage.php
         public int Damage() {
             // TODO: make it depend on stats, skills, equips, etc.
             return 5;
@@ -151,10 +181,10 @@ namespace Felucca.Components {
             // TODO: make this depend on stats, skills, etc.
             return 0.5f;
         }
-        
+
         public void AttemptHit(Creature anotherCreature) {
             if (IsRecoveredFromPreviousHit()) {
-                onHitAttempted();
+                OnHitAttempted?.Invoke();
                 if (HitChance(anotherCreature) > Random.value) {
                     Hit(anotherCreature);
                 } else {
@@ -163,14 +193,14 @@ namespace Felucca.Components {
             }
         }
 
-        public void StartMovingTowards(Vector3 _destination) {
-            destination = _destination;
+        public void StartMovingTowards(Vector3 destination) {
+            this.destination = destination;
         }
-        
+
         public void StopMoving() {
             destination = transform.localPosition;
         }
-        
+
         ////////////////////////////////////////////////////////////////////////
         // Domain logic ////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
@@ -211,15 +241,15 @@ namespace Felucca.Components {
         private float NormalizedRotationSpeed() {
             return rotationSpeed * 10f;
         }
-        
+
         private float NormalizedMovementSpeed() {
             return movementSpeed / 10f;
         }
-        
+
         private float NormalizedAttackSpeed() {
             return attackSpeed / 10f;
         }
-        
+
         private float NormalizedAttackRange() {
             return attackRange / 20f;
         }

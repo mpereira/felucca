@@ -1,10 +1,8 @@
-﻿using System;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
+using UnityEngine.UI;
 using static UnityEngine.GameObject;
-using Image = UnityEngine.UI.Image;
 
 namespace Felucca.Components {
     public class CreatureBar :
@@ -13,24 +11,23 @@ namespace Felucca.Components {
         IBeginDragHandler,
         IPointerEnterHandler,
         IPointerClickHandler,
-        IEndDragHandler
-    {
-        public float width;
-        public float height;
+        IEndDragHandler {
+        public float      width;
+        public float      height;
         public GameObject creatureBarContainer;
-        public Creature creature;
-        public Creature playerCreature;
-        
-        public Image hitPointsImage;
+        public Creature   creature;
+        public Creature   playerCreature;
+
+        public Image         hitPointsImage;
         public RectTransform rectTransform;
-        
+
         private Vector2 _lastMousePosition;
 
         public CreatureBar() {
             width = 80;
             height = 30;
         }
-        
+
         private void Awake() {
             gameObject.AddComponent<CanvasRenderer>();
             rectTransform = gameObject.AddComponent<RectTransform>();
@@ -40,23 +37,26 @@ namespace Felucca.Components {
         public static CreatureBar Create(GameObject gameObject) {
             var creatureBars = Find("Creature Bars");
             var playerCreature = Find("Player").GetComponent<Creature>();
-            
+
             var creatureBarContainer = new GameObject(gameObject.name);
             var creatureBar = creatureBarContainer.AddComponent<CreatureBar>();
             creatureBarContainer.transform.SetParent(creatureBars.transform);
 
             var sizeDelta = new Vector2(creatureBar.width, creatureBar.height);
-            
+
             var creatureBarBackground = new GameObject("Background");
-            creatureBarBackground.transform.SetParent(creatureBarContainer.transform);
+            creatureBarBackground.transform.SetParent(
+                creatureBarContainer.transform
+            );
             var backgroundImageColor = Color.white;
             backgroundImageColor.a = 0.5f;
             // The Image component comes with a RectTransform.
             var backgroundImage = creatureBarBackground.AddComponent<Image>();
             backgroundImage.color = backgroundImageColor;
-            var backgroundRectTransform = creatureBarBackground.GetComponent<RectTransform>();
+            var backgroundRectTransform =
+                creatureBarBackground.GetComponent<RectTransform>();
             backgroundRectTransform.sizeDelta = sizeDelta;
-            
+
             var creatureBarText = new GameObject("Text");
             creatureBarText.transform.SetParent(creatureBarContainer.transform);
             // The TextMeshProUGUI component comes with a RectTransform.
@@ -64,35 +64,40 @@ namespace Felucca.Components {
             text.text = gameObject.name;
             text.alignment = TextAlignmentOptions.TopGeoAligned;
             text.fontSize = 12f;
-            var textRectTransform = creatureBarText.GetComponent<RectTransform>();
+            var textRectTransform =
+                creatureBarText.GetComponent<RectTransform>();
             textRectTransform.sizeDelta = sizeDelta;
-            
+
             var creatureBarHitPoints = new GameObject("Hit Points");
-            creatureBarHitPoints.transform.SetParent(creatureBarContainer.transform);
+            creatureBarHitPoints.transform.SetParent(
+                creatureBarContainer.transform
+            );
             var hitPointsImage = creatureBarHitPoints.AddComponent<Image>();
-            var hitPointsRectTransform = creatureBarHitPoints.GetComponent<RectTransform>();
+            var hitPointsRectTransform =
+                creatureBarHitPoints.GetComponent<RectTransform>();
             hitPointsImage.color = Color.red;
             // http://www.1x1px.me/.
             hitPointsImage.sprite = Resources.Load<Sprite>("FFFFFF-1");
             hitPointsImage.type = Image.Type.Filled;
             hitPointsImage.fillMethod = Image.FillMethod.Horizontal;
-            hitPointsRectTransform.sizeDelta = new Vector2(sizeDelta.x * 0.8f, 8);
+            hitPointsRectTransform.sizeDelta =
+                new Vector2(sizeDelta.x * 0.8f, 8);
             hitPointsRectTransform.position = new Vector3(0, 8, 0);
             // Anchor bottom center works nice with sizeDelta.y == position.
             hitPointsRectTransform.anchorMax = new Vector2(0.5f, 0);
             hitPointsRectTransform.anchorMin = new Vector2(0.5f, 0);
-            
+
             creatureBar.creatureBarContainer = creatureBarContainer;
             creatureBar.creature = gameObject.GetComponent<Creature>();
             creatureBar.playerCreature = playerCreature;
             creatureBar.hitPointsImage = hitPointsImage;
-            
+
             creatureBar.Hide();
-            
+
             return creatureBar;
         }
 
-        public float CreatureHitPointPercentage() {
+        private float CreatureHitPointPercentage() {
             return (float) creature.hitPoints / creature.MaxHitPoints();
         }
 
@@ -107,7 +112,7 @@ namespace Felucca.Components {
         public void Show() {
             creatureBarContainer.SetActive(true);
         }
-        
+
         public void MoveToFront() {
             rectTransform.SetAsLastSibling();
         }
@@ -150,24 +155,27 @@ namespace Felucca.Components {
             _lastMousePosition = eventData.position;
             MoveToFront();
         }
-     
+
         public void OnDrag(PointerEventData eventData) {
             Vector2 currentMousePosition = eventData.position;
             Vector2 diff = currentMousePosition - _lastMousePosition;
             Vector3 newPosition = rectTransform.position + new Vector3(
-                diff.x, diff.y, transform.position.z
-            );
+                                      diff.x,
+                                      diff.y,
+                                      transform.position.z
+                                  );
             Vector3 oldPos = rectTransform.position;
             rectTransform.position = newPosition;
-            if(!IsRectTransformInsideScreen()) {
+            if (!IsRectTransformInsideScreen()) {
                 rectTransform.position = oldPos;
             }
+
             _lastMousePosition = currentMousePosition;
         }
-     
+
         public void OnEndDrag(PointerEventData eventData) {
         }
-     
+
         private bool IsRectTransformInsideScreen() {
             Vector3[] corners = new Vector3[4];
             rectTransform.GetWorldCorners(corners);

@@ -3,19 +3,19 @@ using UnityEngine;
 namespace Felucca.Components {
     public class DragCreatureBar : MonoBehaviour {
         public float dragStartThreshold;
-        
-        private Camera _camera;
+
+        private Camera      _camera;
         private CreatureBar _creatureBar;
-        private Vector3? _startedDraggingFrom;
-        
+        private Vector3?    _startedDraggingFrom;
+
         private void Start() {
             _camera = Camera.main;
             _creatureBar = CreatureBar.Create(gameObject);
         }
-        
+
         private void OnMouseOver() {
         }
-        
+
         private void OnMouseDown() {
             if (Input.GetKeyDown(KeyCode.Mouse0)) {
                 _startedDraggingFrom = Input.mousePosition;
@@ -31,11 +31,11 @@ namespace Felucca.Components {
                 _startedDraggingFrom.Value,
                 Input.mousePosition
             );
-            
+
             if (dragDistance < dragStartThreshold) {
                 return;
             }
-            
+
             _creatureBar.ShowIfHidden();
             _creatureBar.MoveToFront();
 
@@ -44,6 +44,7 @@ namespace Felucca.Components {
             if (targetHit == null) {
                 return;
             }
+
             var screenPoint = _camera.WorldToScreenPoint(
                 targetHit.Value.point
             );
@@ -53,7 +54,7 @@ namespace Felucca.Components {
                 screenPoint.y - Screen.height / 2f,
                 0
             );
-            
+
             _creatureBar.UpdatePosition(position);
         }
 

@@ -4,8 +4,7 @@ namespace Felucca.Components {
     public class Player : MonoBehaviour {
         public Creature creature;
 
-        private void Start()
-        {
+        private void Start() {
             creature = GetComponent<Creature>();
         }
 
@@ -25,7 +24,8 @@ namespace Felucca.Components {
         }
 
         private void HandleCreatureClick(RaycastHit hit) {
-            var targetCreature = hit.collider.gameObject.GetComponent<Creature>();
+            var targetCreature =
+                hit.collider.gameObject.GetComponent<Creature>();
             creature.StartAttacking(targetCreature);
             targetCreature.AcknowledgeAttacker(creature);
         }
@@ -36,6 +36,7 @@ namespace Felucca.Components {
                 if (targetHit == null) {
                     return;
                 }
+
                 if (IsTerrainClick(targetHit.Value)) {
                     HandleTerrainClick(targetHit.Value);
                 }
@@ -44,6 +45,7 @@ namespace Felucca.Components {
                 if (targetHit == null) {
                     return;
                 }
+
                 if (IsCreatureClick(targetHit.Value)) {
                     HandleCreatureClick(targetHit.Value);
                 }

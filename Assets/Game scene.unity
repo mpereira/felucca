@@ -399,10 +399,10 @@ RectTransform:
   m_Father: {fileID: 269880376}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1516333249
 MonoBehaviour:
@@ -416,7 +416,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11f5a5fc782243d384ef21172182dcda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  statAndSkillSystem: {fileID: 0}
+  statAndSkillSystem: {fileID: 3010142824009850252, guid: 19f99c28790a045bcb11f82fa7324b85,
+    type: 3}
+  bottomLeftMessages: {fileID: 1516333247}
+  bottomLeftMessagePrefab: {fileID: 6942958081060468771, guid: 017e959f9d2224e368ab86dc2f30d2ae,
+    type: 3}
+  marginLeft: 7.5
+  marginBottom: 7.5
+  messageTtl: 5
+  messageDisappearSpeed: 1
+  messageFontSize: 18
+  messageVerticalMargin: 5
+  maximumMessages: 10
 --- !u!1 &1791961612
 GameObject:
   m_ObjectHideFlags: 0
@@ -670,8 +681,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c234f060e5ba4983a9bfd7d67057e299, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  followee: {fileID: 4229681280088443111, guid: 19f99c28790a045bcb11f82fa7324b85,
-    type: 3}
+  mainCamera: {fileID: 1977995876}
+  followee: {fileID: 0}
   position: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
   isFollowing: 1
