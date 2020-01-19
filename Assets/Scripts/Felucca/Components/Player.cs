@@ -17,7 +17,6 @@ namespace Felucca.Components {
         }
 
         private void HandleTerrainClick(RaycastHit hit) {
-            creature.StopAttacking();
             var point = hit.point;
             point.y = this.transform.localPosition.y;
             creature.StartMovingTowards(point);

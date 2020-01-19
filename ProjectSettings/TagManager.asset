@@ -13,7 +13,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - Attack Popups
   - 
   - 
   - 
@@ -38,6 +38,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Attack Popups
+    uniqueID: 1585476027
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

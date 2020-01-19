@@ -212,6 +212,7 @@ RectTransform:
   m_Children:
   - {fileID: 842916618}
   - {fileID: 1516333248}
+  - {fileID: 1027685401}
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -368,6 +369,62 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1027685400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1027685401}
+  - component: {fileID: 1027685402}
+  m_Layer: 5
+  m_Name: Attack Popups
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1027685401
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1027685400}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 269880376}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1027685402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1027685400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c2b984bf5874423a69bab25b19bcff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hitPopupPrefab: {fileID: 8072592498239189820, guid: 771b39de9698e4bde8b8652f82455fc7,
+    type: 3}
+  missPopupPrefab: {fileID: 3426168954572740159, guid: 6aa514f3218d94c51b73c4f677337bad,
+    type: 3}
+  attackPopupsContainer: {fileID: 1027685400}
+  attackPopupFontSize: 14
+  attackPopupTtl: 5
+  attackPopupDisappearSpeed: 0.5
 --- !u!1 &1516333247
 GameObject:
   m_ObjectHideFlags: 0
@@ -682,7 +739,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 1977995876}
-  followee: {fileID: 0}
+  followee: {fileID: 6586718375276779036, guid: 19f99c28790a045bcb11f82fa7324b85,
+    type: 3}
   position: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
   isFollowing: 1
@@ -699,6 +757,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainLight: {fileID: 1974781530}
+  followingCamera: {fileID: 1977995878}
+  bottomLeftMessages: {fileID: 1516333249}
+  attackPopups: {fileID: 1027685402}
   playerPrefab: {fileID: 4229681280088443111, guid: 19f99c28790a045bcb11f82fa7324b85,
     type: 3}
   ratmanPrefab: {fileID: 6717856457740129321, guid: 25868d78bc2c14b0c92cae8c9f8ff3b1,

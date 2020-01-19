@@ -10,7 +10,7 @@ PrefabInstance:
     - target: {fileID: 2552721851097492037, guid: a241cea32794241deb04912eb94d9dda,
         type: 3}
       propertyPath: m_Name
-      value: a dragon 2
+      value: a dragon
       objectReference: {fileID: 0}
     - target: {fileID: 2552721851097492039, guid: a241cea32794241deb04912eb94d9dda,
         type: 3}
@@ -90,7 +90,7 @@ PrefabInstance:
     - target: {fileID: 4807442242596287678, guid: a241cea32794241deb04912eb94d9dda,
         type: 3}
       propertyPath: strength
-      value: 100
+      value: 10000
       objectReference: {fileID: 0}
     - target: {fileID: 4807442242596287678, guid: a241cea32794241deb04912eb94d9dda,
         type: 3}

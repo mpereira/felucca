@@ -2,7 +2,10 @@
 
 namespace Felucca.Components {
     public class Game : MonoBehaviour {
-        public Light mainLight;
+        public Light              mainLight;
+        public FollowingCamera    followingCamera;
+        public BottomLeftMessages bottomLeftMessages;
+        public AttackPopups               attackPopups;
 
         public GameObject playerPrefab;
         public GameObject ratmanPrefab;
@@ -27,13 +30,17 @@ namespace Felucca.Components {
             mainLight.shadows = LightShadows.Soft;
             mainLight.shadowStrength = 0.2f;
 
-            var followingCamera = FindObjectOfType<FollowingCamera>();
             followingCamera.Follow(player.creature);
 
-            var bottomLeftMessages = FindObjectOfType<BottomLeftMessages>();
             bottomLeftMessages.RegisterStatAndSkillSystem(
                 player.GetComponent<StatAndSkillSystem>()
             );
+
+            // TODO: create some sort of `CreatureMaker` that has a reference
+            // to `hits` and calls `RegisterCreature`.
+            foreach (var creature in FindObjectsOfType<Creature>()) {
+                attackPopups.RegisterCreature(creature);
+            }
         }
     }
 }

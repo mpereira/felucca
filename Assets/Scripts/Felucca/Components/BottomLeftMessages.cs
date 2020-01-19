@@ -31,7 +31,6 @@ namespace Felucca.Components {
             statAndSkillSystem.OnSkillChange += DisplaySkillChange;
 
             _textInfo = CultureInfo.CurrentCulture.TextInfo;
-
             _calculatedFontMarginBottom = messageFontSize / 2f;
         }
 
@@ -106,9 +105,8 @@ namespace Felucca.Components {
 
             _messageGameObjects.Add(message, messageGameObject);
 
-            var ephemeralFadingVisual =
-                messageGameObject.GetComponent<FadingVisual>();
-            ephemeralFadingVisual.SetTtlAndDisappearSpeed(
+            var fadingVisual = messageGameObject.GetComponent<FadingVisual>();
+            fadingVisual.SetTtlAndDisappearSpeed(
                 messageTtl,
                 messageDisappearSpeed
             );

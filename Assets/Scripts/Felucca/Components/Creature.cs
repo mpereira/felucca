@@ -33,12 +33,14 @@ namespace Felucca.Components {
 
         public CharacterController characterController;
 
-        public float moveThreshold = 0.5f;
+        public float moveThreshold         = 0.5f;
+        public int   resurrectionHitPoints = 1;
 
-        public event Action OnHitAttempted;
-        public event Action OnHit;
-        public event Action OnMiss;
-        public event Action OnDeath;
+        public event Action<Creature, Creature>      OnHitAttempted;
+        public event Action<Creature, Creature, int> OnHit;
+        public event Action<Creature, Creature>      OnMiss;
+        public event Action                          OnDeath;
+        public event Action                          OnResurrection;
 
         ////////////////////////////////////////////////////////////////////////
         // Lifecycle ///////////////////////////////////////////////////////////
@@ -130,10 +132,33 @@ namespace Felucca.Components {
             if (!ReferenceEquals(anotherCreature, this)) {
                 attackee = anotherCreature;
             }
+
+            anotherCreature.OnDeath += () => { OnAttackeeDeathLastHit(this); };
+        }
+
+        public Action OnAttackeeDeath(Creature anotherCreature) {
+            return () => {
+                StopAttacking(anotherCreature);
+                StopMoving();
+            };
+        }
+
+        public void OnAttackeeDeathLastHit(Creature anotherCreature) {
         }
 
         public void StopAttacking() {
-            attackee = null;
+            if (attackee == null) {
+                return;
+            }
+
+            StopAttacking(attackee);
+        }
+
+        public void StopAttacking(Creature anotherCreature) {
+            anotherCreature.OnDeath -= OnAttackeeDeath(this);
+            if (attackee == anotherCreature) {
+                attackee = null;
+            }
         }
 
         public void AcknowledgeAttacker(Creature attackingCreature) {
@@ -142,49 +167,74 @@ namespace Felucca.Components {
         }
 
         public void Die() {
+            StopAttacking();
+            StopMoving();
+            OnDeath?.Invoke();
         }
 
-        public void Resurrect() {
-        }
-
-        public void ReceiveHit(int damage) {
+        public void ReceiveHit(Creature attacker, int damage) {
             hitPoints = Mathf.Clamp(hitPoints - damage, 0, MaxHitPoints());
             if (IsDead()) {
                 Die();
+                attacker.OnAttackeeDeathLastHit(this);
             }
         }
 
-        public void Heal(int amount) {
-            var wasDead = IsDead();
-            hitPoints = Mathf.Clamp(hitPoints + amount, 0, MaxHitPoints());
-            if (wasDead && IsAlive()) {
-                Resurrect();
+        public void Resurrect() {
+            if (IsAlive()) {
+                return;
             }
+
+            hitPoints = Mathf.Clamp(resurrectionHitPoints, 0, MaxHitPoints());
+            OnResurrection?.Invoke();
+        }
+
+        public void Heal(int amount) {
+            if (IsDead()) {
+                return;
+            }
+
+            hitPoints = Mathf.Clamp(hitPoints + amount, 0, MaxHitPoints());
         }
 
         // http://www.uoguide.com/Damage_Increase
         // https://uo.stratics.com/content/arms-armor/damage.php
         public int Damage() {
             // TODO: make it depend on stats, skills, equips, etc.
-            return 5;
+            return 5 + Random.Range(0, 10);
         }
 
         public void Hit(Creature anotherCreature) {
-            lastHitAttemptedAt = Time.time;
-            anotherCreature.ReceiveHit(Damage());
+            if (anotherCreature.IsDead()) {
+                return;
+            }
+
+            var damage = Damage();
+            anotherCreature.ReceiveHit(this, damage);
+            OnHit?.Invoke(this, anotherCreature, damage);
         }
 
         public void Miss(Creature anotherCreature) {
+            OnMiss?.Invoke(this, anotherCreature);
+        }
+
+        public int AttackSpeed() {
+            return Mathf.Clamp(attackSpeed + Random.Range(0, 10), 0, 100);
         }
 
         public float HitChance(Creature anotherCreature) {
-            // TODO: make this depend on stats, skills, etc.
-            return 0.5f;
+            // TODO: make this depend on stats, skills, the other creature etc.
+            var minimumHitChance = 0.05f;
+            var hitChance =
+                minimumHitChance +
+                dexterity / anotherCreature.dexterity;
+            return Mathf.Clamp(hitChance, 0f, 1f);
         }
 
         public void AttemptHit(Creature anotherCreature) {
             if (IsRecoveredFromPreviousHit()) {
-                OnHitAttempted?.Invoke();
+                lastHitAttemptedAt = Time.time;
+                OnHitAttempted?.Invoke(this, anotherCreature);
                 if (HitChance(anotherCreature) > Random.value) {
                     Hit(anotherCreature);
                 } else {
@@ -247,7 +297,7 @@ namespace Felucca.Components {
         }
 
         private float NormalizedAttackSpeed() {
-            return attackSpeed / 10f;
+            return AttackSpeed() / 10f;
         }
 
         private float NormalizedAttackRange() {
